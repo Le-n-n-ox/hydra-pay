@@ -37,3 +37,6 @@ frontend/dist/
 # Throwaway databases created by the test runs
 .pytest-tmp*/
 .pytest_cache/
+
+# Local settings (admin PIN, admin phone). Copy settings.example.json to start.
+settings.json
