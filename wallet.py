@@ -8,14 +8,26 @@ import sms
 import store
 import whatsapp
 
-SETTINGS = Path(__file__).parent / "settings.json"
+import config
+
+SETTINGS = config.DATA_DIR / "settings.json"
+DEFAULTS = Path(__file__).parent / "settings.example.json"
+
+
+def _read(path):
+    try:
+        return json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return None
 
 
 def settings():
-    try:
-        return json.loads(SETTINGS.read_text(encoding="utf-8"))
-    except Exception:
-        return {}
+    current = _read(SETTINGS)
+    if current is None:          # first run (e.g. a fresh cloud server): start from the example settings
+        current = _read(DEFAULTS) or {}
+    if config.ADMIN_PIN:         # ADMIN_PIN in the environment wins over the file
+        current["admin_pin"] = config.ADMIN_PIN
+    return current
 
 
 def update_settings(values):
@@ -23,7 +35,7 @@ def update_settings(values):
     allowed = {"ussd_code", "ussd_language_default", "ussd_pin_required", "ussd_max_prompts_per_hour",
                "sms_receipts", "sms_when_whatsapp_fails", "sms_low_balance", "sms_admin_alerts", "admin_phone",
                "admin_daily_summary_time"}
-    current = settings()
+    current = _read(SETTINGS) or _read(DEFAULTS) or {}
     for key, value in values.items():
         if key in allowed:
             current[key] = value

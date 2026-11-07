@@ -7,8 +7,10 @@ import threading
 from datetime import datetime
 from pathlib import Path
 
+import config
+
 HERE = Path(__file__).parent
-DB_PATH = HERE / "rfid.db"
+DB_PATH = config.DATA_DIR / "rfid.db"
 
 _lock = threading.RLock()
 _db = sqlite3.connect(DB_PATH, check_same_thread=False)

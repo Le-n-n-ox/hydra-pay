@@ -1,0 +1,29 @@
+# Secrets and local data never go into the image (set them as environment variables instead).
+.env
+.env.*
+mpesa_config.json
+settings.json
+.flask_secret
+rfid.db
+*.db
+*.csv
+names.json
+phones.json
+voice_cache/
+
+# Not needed to build or run
+.git/
+.venv/
+.graphify-venv/
+graphify-out/
+frontend/node_modules/
+frontend/dist/
+static/
+pitch/
+docs/
+*.jpeg
+*.jpg
+*.md
+.pytest-tmp*/
+.pytest_cache/
+__pycache__/

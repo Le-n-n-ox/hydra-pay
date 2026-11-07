@@ -54,6 +54,10 @@ ngrok gives the laptop a public HTTPS address, so Safaricom, UltraMsg and the SM
 
 > Free ngrok allows one tunnel at a time and shows a "Visit Site" warning page to first-time browser visitors. Your free ngrok address stays the same between restarts.
 
+### Or run it in the cloud
+
+The dashboard, M-Pesa, WhatsApp, SMS and USSD can run on a cloud server (e.g. Rumpty) from the root `Dockerfile`, while the reader stays on the laptop: **`start_bridge.bat`** sends each tap to the server, so the laptop no longer needs ngrok. Setup: [docs/CLOUD_DEPLOY.md](docs/CLOUD_DEPLOY.md).
+
 ## Configuration
 
 | File | What goes in it |
@@ -80,6 +84,8 @@ Then restart and use **Dashboard › SMS & USSD › Send a test SMS**. That page
 | Path | What it is |
 |---|---|
 | `start.bat`, `get_ngrok_url.ps1` | One-click launcher |
+| `bridge.py`, `start_bridge.bat` | Cloud mode: sends card taps from the USB reader to the cloud server |
+| `Dockerfile`, `config.py`, `cloud_env.py` | Cloud server image, environment settings, helper that prepares the cloud variables |
 | `dashboard.py` | Flask server: reads the reader, serves the pages, JSON API, M-Pesa / WhatsApp / SMS / USSD callbacks |
 | `wallet.py` | What happens on a tap, M-Pesa and cash top-ups, receipts, notifications |
 | `mpesa.py` | Daraja STK push and status checks |
@@ -142,6 +148,7 @@ npm run build      # writes to ../static, which Flask serves
 - [docs/WHAT_WORKS.md](docs/WHAT_WORKS.md): implemented features and how to check them
 - [docs/WHAT_TO_ADD.md](docs/WHAT_TO_ADD.md): what's still needed before real-world use
 - [docs/USSD_SMS_SETUP.md](docs/USSD_SMS_SETUP.md): SMS and USSD providers
+- [docs/CLOUD_DEPLOY.md](docs/CLOUD_DEPLOY.md): run the server in the cloud with the laptop bridge
 
 ---
 

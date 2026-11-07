@@ -12,12 +12,19 @@ import requests
 from dotenv import dotenv_values
 
 HERE = Path(__file__).parent
-VOICE_DIR = HERE / "voice_cache"
+import config
+
+VOICE_DIR = config.DATA_DIR / "voice_cache"
 VOICE_DIR.mkdir(exist_ok=True)
 
 
 KEYS_PATH = HERE / ".env"
-KEYS = {k: (v or "").strip() for k, v in dotenv_values(KEYS_PATH).items()}
+_FILE_KEYS = {k: (v or "").strip() for k, v in dotenv_values(KEYS_PATH).items()}
+# Environment variables (cloud) win over .env (laptop).
+KEYS = {k: config.env(k) or v for k, v in _FILE_KEYS.items()}
+for _k in ("ULTRAMSG_INSTANCE", "ULTRAMSG_TOKEN", "GEMINI_API_KEY", "GEMINI_MODEL", "ELEVENLABS_API_KEY",
+           "ELEVENLABS_VOICE_ID", "ELEVENLABS_MODEL", "VOICE_ENDPOINT"):
+    KEYS[_k] = config.env(_k) or KEYS.get(_k, "")
 INSTANCE = KEYS.get("ULTRAMSG_INSTANCE", "")
 TOKEN = KEYS.get("ULTRAMSG_TOKEN", "")
 GEMINI_KEY = KEYS.get("GEMINI_API_KEY", "")
@@ -43,6 +50,8 @@ _public = {"url": ""}
 
 
 def public_url():
+    if config.PUBLIC_URL:      # cloud: fixed address
+        return config.PUBLIC_URL
     if _public["url"]:
         return _public["url"]
     try:
