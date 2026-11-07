@@ -33,3 +33,7 @@ tag_reads.md
 # Frontend build tooling (the built app lives in static/)
 frontend/node_modules/
 frontend/dist/
+
+# Throwaway databases created by the test runs
+.pytest-tmp*/
+.pytest_cache/
