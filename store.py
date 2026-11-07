@@ -167,6 +167,13 @@ def tap(uid):
             _db.commit()
             return {"time": t, "uid": uid, "card": None, "result": "unregistered"}
 
+        if card.get("blocked"):
+            _db.execute("INSERT INTO scans (time, uid, direction, result, amount, balance) VALUES (?,?,?,?,?,?)",
+                        (t, uid, card["status"], "blocked", 0, card["balance"]))
+            _db.commit()
+            return {"time": t, "uid": uid, "card": card, "direction": card["status"], "result": "blocked",
+                    "balance": card["balance"], "price": card["price"], "tx_id": None}
+
         price = int(card["price"] or 0)
         tx_id = None
         if card["status"] == "IN":

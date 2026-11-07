@@ -2,144 +2,325 @@
 <html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>RFID Pay</title>
 <style>
+ :root{--bg:#0b1020;--card:rgba(255,255,255,.055);--line:rgba(255,255,255,.09);--txt:#e8ecf5;--mut:#8f9bb3;
+   --blue:#4f8cff;--violet:#8b5cf6;--green:#10b981;--red:#ef4444;--amber:#f59e0b}
  *{box-sizing:border-box}
- body{font-family:Segoe UI,sans-serif;background:#111827;color:#e5e7eb;margin:0;padding:20px;max-width:1100px;margin:auto}
- h1{margin:0 0 4px} h3{margin:0 0 12px;display:flex;justify-content:space-between;align-items:center}
- .muted{color:#9ca3af;font-size:14px}
- .dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px}
- .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:18px 0}
- .tile{background:#1f2937;border-radius:10px;padding:14px 16px}
- .tile b{display:block;font-size:28px;margin-top:4px}
- .box{background:#1f2937;border-radius:10px;padding:16px;margin-bottom:18px;overflow-x:auto}
- table{width:100%;border-collapse:collapse;font-size:14px} td,th{padding:9px 8px;text-align:left;border-bottom:1px solid #374151;white-space:nowrap}
- th{color:#9ca3af;font-weight:600}
- .ok{color:#34d399;font-weight:bold} .bad{color:#f87171;font-weight:bold} .wait{color:#fbbf24;font-weight:bold}
- code{color:#93c5fd}
- button{background:#2563eb;color:#fff;border:0;border-radius:6px;padding:7px 12px;cursor:pointer;font-size:13px}
- button.green{background:#059669} button.gray{background:#4b5563}
- input{background:#111827;color:#e5e7eb;border:1px solid #374151;border-radius:6px;padding:9px;font-size:15px;width:100%}
- .form{display:none;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;align-items:end;margin-top:14px}
- .form.show{display:grid}
- .form label{font-size:13px;color:#9ca3af}
- .banner{background:#78350f;border:1px solid #f59e0b;border-radius:10px;padding:14px;margin-bottom:18px}
- #toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);padding:12px 18px;border-radius:8px;display:none;max-width:90%}
+ body{font-family:Inter,"Segoe UI",system-ui,sans-serif;background:var(--bg);color:var(--txt);margin:0;padding:22px;min-height:100vh;overflow-x:hidden}
+ body::before,body::after{content:"";position:fixed;width:520px;height:520px;border-radius:50%;filter:blur(110px);opacity:.28;z-index:-1;animation:float 16s ease-in-out infinite}
+ body::before{background:var(--blue);top:-160px;left:-120px}
+ body::after{background:var(--violet);bottom:-180px;right:-120px;animation-delay:-8s}
+ @keyframes float{50%{transform:translate(60px,40px) scale(1.12)}}
+ .wrap{max-width:1100px;margin:auto}
+ .top{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px;margin-bottom:20px;animation:fadeUp .6s both}
+ .brand{display:flex;align-items:center;gap:14px}
+ .logo{width:48px;height:48px;border-radius:14px;background:linear-gradient(135deg,var(--blue),var(--violet));display:grid;place-items:center;box-shadow:0 8px 28px rgba(79,140,255,.4)}
+ .logo svg{width:26px;height:26px;stroke:#fff;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+ h1{margin:0;font-size:26px;letter-spacing:-.5px;background:linear-gradient(90deg,#fff,#a5b4fc);-webkit-background-clip:text;background-clip:text;color:transparent}
+ .sub{color:var(--mut);font-size:13px}
+ .chips{display:flex;gap:8px;flex-wrap:wrap}
+ .chip{display:inline-flex;align-items:center;gap:7px;padding:7px 13px;border-radius:999px;background:var(--card);border:1px solid var(--line);font-size:13px;backdrop-filter:blur(10px)}
+ .dot{width:9px;height:9px;border-radius:50%;background:var(--mut);position:relative}
+ .dot.on{background:var(--green)} .dot.off{background:var(--red)}
+ .dot.on::after,.dot.off::after{content:"";position:absolute;inset:0;border-radius:50%;background:inherit;animation:ping 1.8s infinite}
+ @keyframes ping{to{transform:scale(2.8);opacity:0}}
+ .muted{color:var(--mut);font-size:14px}
+ .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:14px;margin-bottom:20px}
+ .tile{position:relative;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;backdrop-filter:blur(14px);overflow:hidden;transition:transform .25s,box-shadow .25s;animation:fadeUp .6s both}
+ .tile:nth-child(2){animation-delay:.08s}.tile:nth-child(3){animation-delay:.16s}.tile:nth-child(4){animation-delay:.24s}
+ .tile:hover{transform:translateY(-4px);box-shadow:0 14px 34px rgba(0,0,0,.35)}
+ .tile::before{content:"";position:absolute;inset:0 0 auto 0;height:3px;background:var(--g)}
+ .tile .ic{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;background:var(--g);font-size:18px;margin-bottom:12px}
+ .tile span{color:var(--mut);font-size:13px}
+ .tile b{display:block;font-size:30px;margin-top:2px;letter-spacing:-.5px;font-variant-numeric:tabular-nums}
+ .box{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;margin-bottom:20px;overflow-x:auto;backdrop-filter:blur(14px);animation:fadeUp .6s .2s both}
+ h3{margin:0 0 14px;font-size:17px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+ table{width:100%;border-collapse:collapse;font-size:14px}
+ td,th{padding:11px 9px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}
+ th{color:var(--mut);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.06em}
+ tbody tr{transition:background .2s} tbody tr:hover{background:rgba(255,255,255,.04)}
+ tr.flash{animation:flash 2.4s ease-out}
+ @keyframes flash{0%{background:rgba(79,140,255,.35);transform:translateX(-8px)}100%{background:transparent;transform:none}}
+ .pill{display:inline-block;padding:4px 11px;border-radius:999px;font-size:12px;font-weight:600}
+ .ok{color:#34d399;background:rgba(16,185,129,.14)} .bad{color:#f87171;background:rgba(239,68,68,.14)}
+ .wait{color:#fbbf24;background:rgba(245,158,11,.14);animation:pulse 1.4s infinite}
+ .idle{color:var(--mut);background:rgba(255,255,255,.07)}
+ @keyframes pulse{50%{opacity:.5}}
+ .av{display:inline-grid;place-items:center;width:34px;height:34px;border-radius:50%;font-weight:700;font-size:13px;color:#fff;margin-right:10px;vertical-align:middle}
+ code{color:#93c5fd;font-family:Consolas,monospace;font-size:13px}
+ button{background:linear-gradient(135deg,var(--blue),#3b6fe0);color:#fff;border:0;border-radius:10px;padding:9px 15px;cursor:pointer;font-size:13px;font-weight:600;
+   transition:transform .15s,box-shadow .2s,filter .2s;box-shadow:0 4px 14px rgba(79,140,255,.3)}
+ button:hover{transform:translateY(-2px);filter:brightness(1.1)} button:active{transform:scale(.96)}
+ button.green{background:linear-gradient(135deg,#10b981,#059669);box-shadow:0 4px 14px rgba(16,185,129,.3)}
+ button.gray{background:rgba(255,255,255,.09);box-shadow:none;border:1px solid var(--line)}
+ input,select{background:rgba(0,0,0,.28);color:var(--txt);border:1px solid var(--line);border-radius:10px;padding:10px 12px;font-size:14px;width:100%;transition:border .2s,box-shadow .2s}
+ select{width:auto} input:focus,select:focus{outline:0;border-color:var(--blue);box-shadow:0 0 0 3px rgba(79,140,255,.25)}
+ .form{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;align-items:end;margin-top:16px;padding:16px;border-radius:14px;background:rgba(0,0,0,.2);border:1px dashed var(--line);animation:fadeUp .35s both}
+ .form label{font-size:12px;color:var(--mut);display:block;margin-bottom:5px}
+ .banner{display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:linear-gradient(135deg,rgba(245,158,11,.18),rgba(139,92,246,.18));border:1px solid rgba(245,158,11,.5);border-radius:16px;padding:16px;margin-bottom:20px;animation:slideIn .5s both}
+ .ring{width:42px;height:42px;border-radius:50%;background:var(--amber);display:grid;place-items:center;font-size:20px;position:relative;flex:none}
+ .ring::after{content:"";position:absolute;inset:0;border-radius:50%;border:2px solid var(--amber);animation:ping 1.4s infinite}
+ @keyframes slideIn{from{opacity:0;transform:translateY(-16px) scale(.98)}}
+ @keyframes fadeUp{from{opacity:0;transform:translateY(14px)}}
+ .empty{text-align:center;color:var(--mut);padding:28px 0!important}
+ #links{padding:6px 2px 30px;text-align:center}
+ .toast{position:fixed;bottom:24px;left:50%;transform:translate(-50%,30px);padding:13px 20px;border-radius:12px;opacity:0;pointer-events:none;max-width:90%;font-weight:600;
+   box-shadow:0 12px 34px rgba(0,0,0,.45);transition:.35s;z-index:9}
+ .toast.show{opacity:1;transform:translate(-50%,0)}
+ @media(max-width:600px){body{padding:14px}h1{font-size:22px}.tile b{font-size:26px}}
 </style></head><body>
+<div id="root"></div>
 
-<h1>💳 RFID Pay</h1>
-<div id="status" class="muted"></div>
+<script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone@7.26.4/babel.min.js"></script>
 
-<div id="newcard"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef } = React;
 
-<div class="tiles">
- <div class="tile">Collected today<b id="t_money">KSh 0</b></div>
- <div class="tile">Paid swipes<b id="t_paid">0</b></div>
- <div class="tile">Didn't pay<b id="t_unpaid">0</b></div>
- <div class="tile">Inside now<b id="t_in">0</b></div>
-</div>
-
-<div class="box">
- <h3>M-Pesa payments <button class="gray" onclick="location.href='/api/export?what=payments&date='+today()">⬇ Download today (Excel)</button></h3>
- <table><thead><tr><th>Time</th><th>Name</th><th>Phone</th><th>KSh</th><th>Status</th><th>M-Pesa code</th></tr></thead><tbody id="pay"></tbody></table>
-</div>
-
-<div class="box">
- <h3>Cards <button class="green" onclick="openForm()">+ Add card</button></h3>
- <div class="muted" style="margin-bottom:8px">Change a name, phone or price right in the table, then press Save. Card owners can also change their own number on WhatsApp (send <b>3</b>, or just the new number). Lost card? Tap the new one and use <b>Move to this card</b>.</div>
- <table><thead><tr><th>Name</th><th>Phone</th><th>KSh per swipe</th><th>Now</th><th></th></tr></thead><tbody id="cards"></tbody></table>
- <div class="form" id="form">
-  <div><label>Card UID (tap the card to fill this)</label><input id="f_uid" placeholder="C3 6E 01 28"></div>
-  <div><label>Name</label><input id="f_name" placeholder="e.g. John"></div>
-  <div><label>Phone (M-Pesa / WhatsApp)</label><input id="f_phone" placeholder="07xx xxx xxx" inputmode="tel"></div>
-  <div><label>KSh per swipe</label><input id="f_price" inputmode="numeric"></div>
-  <div><button class="green" onclick="saveCard()">Save</button> <button class="gray" onclick="closeForm()">Cancel</button></div>
- </div>
-</div>
-
-<div id="links" class="muted"></div>
-<div id="toast"></div>
-
-<script>
-const $ = id => document.getElementById(id);
-const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const today = () => new Date(Date.now() - new Date().getTimezoneOffset()*60000).toISOString().slice(0,10);
-let D = null, PIN = null;
-
-function toast(msg, bad){ const t=$('toast'); t.textContent=msg; t.style.background=bad?'#991b1b':'#065f46'; t.style.display='block'; clearTimeout(t._h); t._h=setTimeout(()=>t.style.display='none',4000); }
-function openForm(c){ c = c || {}; $('f_uid').value=c.uid||''; $('f_name').value=c.name||''; $('f_phone').value=c.phone||'';
-  $('f_price').value = c.price ?? (D ? D.default_price : 1); $('form').classList.add('show'); (c.uid ? $('f_name') : $('f_uid')).focus(); }
-function closeForm(){ $('form').classList.remove('show'); }
-const formOpen = () => $('form').classList.contains('show');
-function editCard(uid){ openForm(D.cards.find(c => c.uid === uid)); }
-function registerNew(uid){ openForm({uid}); }
-
-async function sendCard(card){
-  if(!PIN){ PIN = prompt('Admin PIN'); if(!PIN) return false; }
-  const r = await fetch('/api/cards', {method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({...card, pin:PIN})});
-  const j = await r.json().catch(()=>({error:'Server error'}));
-  if(r.status === 403) PIN = null;
-  toast(j.message || j.error, !r.ok);
-  return r.ok;
-}
-async function saveCard(){
-  if(await sendCard({uid:$('f_uid').value, name:$('f_name').value, phone:$('f_phone').value, price:$('f_price').value})){ closeForm(); refresh(); }
-}
-async function moveCard(newUid){
-  const old = D.cards.find(c => c.uid === $('mv').value);
-  if(!old || !confirm(`Move ${old.name} (and their history) to card ${newUid}? The old card stops working.`)) return;
-  if(!PIN){ PIN = prompt('Admin PIN'); if(!PIN) return; }
-  const r = await fetch('/api/cards/move', {method:'POST', headers:{'Content-Type':'application/json'},
-    body: JSON.stringify({old_uid: old.uid, new_uid: newUid, pin: PIN})});
-  const j = await r.json().catch(()=>({error:'Server error'}));
-  if(r.status === 403) PIN = null;
-  toast(j.message || j.error, !r.ok);
-  if(r.ok){ $('newcard').innerHTML = ''; refresh(); }
-}
-async function saveRow(i){
-  document.activeElement && document.activeElement.blur();
-  if(await sendCard({uid:D.cards[i].uid, name:$('n'+i).value, phone:$('p'+i).value, price:$('k'+i).value})) refresh();
-}
-
+const avColor = n => `hsl(${[...String(n)].reduce((a,c)=>a+c.charCodeAt(0)*7,0)%360},65%,48%)`;
 const payCls = s => s === 'PAID' ? 'ok' : /^(FAILED|NOT PAID)/.test(s) ? 'bad' : 'wait';
 const payText = s => s === 'PAID' ? '✅ Paid' : s.startsWith('Prompt sent') ? '⏳ Waiting for PIN' : s.startsWith('Sending') ? '⏳ Sending...'
   : s.replace(/^NOT PAID: /, '❌ ').replace(/^FAILED: /, '⚠️ ');
 
-async function refresh(){
-  try{
-    const r = await fetch('/api/data?date=' + today());
-    if(r.status === 401){ location.href = '/login'; return; }
-    D = await r.json();
-  }catch(e){ $('status').innerHTML = '<span class="dot" style="background:#f87171"></span>Dashboard program is not running'; return; }
-  const sv = D.services, on = b => b ? '🟢' : '⚪';
-  $('status').innerHTML = `<span class="dot" style="background:${D.esp.connected?'#34d399':'#f87171'}"></span>Reader: ${D.esp.connected?'connected':'not connected'}
-    &nbsp; ${on(sv.whatsapp)} WhatsApp &nbsp; ${on(sv.gemini)} AI &nbsp; ${on(sv.voice)} Voice`;
-  $('links').innerHTML = `📱 Open on your phone (same WiFi): ${esc(D.lan_url)}` + (D.public_url ? ` &nbsp;·&nbsp; 🌍 ${esc(D.public_url)}` : '');
-
-  if(!document.activeElement || !document.activeElement.closest('#newcard'))
-  $('newcard').innerHTML = D.new_card && !formOpen() ? `<div class="banner">🆕 New card tapped: <code>${esc(D.new_card)}</code>
-     <button class="green" onclick="registerNew('${esc(D.new_card)}')">Register it</button>
-     ${D.cards.length ? `&nbsp; or give it to <select id="mv">${D.cards.map(c => `<option value="${esc(c.uid)}">${esc(c.name)} (${esc(c.phone)})</option>`).join('')}</select>
-     <button class="gray" onclick="moveCard('${esc(D.new_card)}')">Move to this card</button>` : ''}</div>` : '';
-
-  const s = D.summary, paid = s.per_card.reduce((n, c) => n + c.paid_taps, 0);
-  $('t_money').textContent = 'KSh ' + s.mpesa; $('t_paid').textContent = paid;
-  $('t_unpaid').textContent = s.swipe_unpaid; $('t_in').textContent = D.inside.length;
-
-  $('pay').innerHTML = D.payments.length ? D.payments.map(p => `<tr><td>${esc(p.time.slice(5,16))}</td><td><b>${esc(p.name)}</b></td>
-    <td>${esc(p.phone)}</td><td>${esc(p.amount)}</td><td class="${payCls(p.status)}">${esc(payText(p.status))}</td>
-    <td><code>${esc(p.mpesa_receipt || '')}</code></td></tr>`).join('')
-    : '<tr><td colspan="6">No payments yet - swipe a card</td></tr>';
-
-  // don't redraw the cards table while someone is typing in it
-  if(!document.activeElement || !document.activeElement.closest('#cards')) {
-    $('cards').innerHTML = D.cards.length ? D.cards.map((c, i) => `<tr>
-      <td><input id="n${i}" value="${esc(c.name)}" style="min-width:110px"> <div class="muted">${esc(c.uid)}</div></td>
-      <td><input id="p${i}" value="${esc(c.phone)}" inputmode="tel" style="min-width:130px"></td>
-      <td><input id="k${i}" value="${esc(c.price)}" inputmode="numeric" style="width:70px"></td>
-      <td class="${c.status==='IN'?'ok':'muted'}">${esc(c.status)}</td>
-      <td><button class="green" onclick="saveRow(${i})">Save</button></td></tr>`).join('')
-      : '<tr><td colspan="5">No cards yet - tap one on the reader</td></tr>';
-  }
+function usePolling(ms) {
+  const [data, setData] = useState(null);
+  const [down, setDown] = useState(false);
+  const [fresh, setFresh] = useState(() => new Set());
+  const seen = useRef(null);
+  const load = async () => {
+    try {
+      const r = await fetch('/api/data?date=' + today());
+      if (r.status === 401) { location.href = '/login'; return; }
+      const d = await r.json();
+      const keys = d.payments.map(p => p.time + p.phone);
+      if (seen.current === null) seen.current = new Set(keys);
+      else {
+        const f = keys.filter(k => !seen.current.has(k));
+        if (f.length) { setFresh(new Set(f)); f.forEach(k => seen.current.add(k)); }
+      }
+      setData(d); setDown(false);
+    } catch (e) { setDown(true); }
+  };
+  useEffect(() => { load(); const id = setInterval(load, ms); return () => clearInterval(id); }, []);
+  return { data, down, fresh, reload: load };
 }
-refresh(); setInterval(refresh, 2000);
-</script></body></html>
+
+function CountUp({ to, prefix = '' }) {
+  const [v, setV] = useState(to);
+  const cur = useRef(to);
+  useEffect(() => {
+    const from = cur.current; if (from === to) return;
+    const t0 = performance.now(); let raf;
+    const step = t => {
+      const p = Math.min(1, (t - t0) / 600), e = 1 - Math.pow(1 - p, 3);
+      cur.current = Math.round(from + (to - from) * e); setV(cur.current);
+      if (p < 1) raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [to]);
+  return <>{prefix}{v}</>;
+}
+
+const Avatar = ({ name }) => <span className="av" style={{ background: avColor(name) }}>{(name || '?')[0].toUpperCase()}</span>;
+
+function Chip({ on, off, children }) {
+  return <span className="chip"><span className={'dot ' + (off ? 'off' : on ? 'on' : '')}></span>{children}</span>;
+}
+
+function StatTile({ icon, label, grad, children }) {
+  return <div className="tile" style={{ '--g': grad }}><div className="ic">{icon}</div><span>{label}</span><b>{children}</b></div>;
+}
+
+function Toast({ t }) {
+  return <div className={'toast' + (t ? ' show' : '')}
+    style={{ background: t && t.bad ? '#991b1b' : '#065f46' }}>{t ? (t.bad ? '⚠️ ' : '✅ ') + t.msg : ''}</div>;
+}
+
+function NewCardBanner({ uid, cards, onRegister, onMove }) {
+  const [mv, setMv] = useState('');
+  const sel = cards.some(c => c.uid === mv) ? mv : (cards[0] && cards[0].uid);
+  return (
+    <div className="banner">
+      <div className="ring">🆕</div>
+      <div>New card tapped<br /><code>{uid}</code></div>
+      <button className="green" onClick={() => onRegister(uid)}>Register it</button>
+      {cards.length > 0 && <>
+        <span className="muted">or give it to</span>
+        <select value={sel} onChange={e => setMv(e.target.value)}>
+          {cards.map(c => <option key={c.uid} value={c.uid}>{c.name} ({c.phone})</option>)}
+        </select>
+        <button className="gray" onClick={() => onMove(sel, uid)}>Move to this card</button>
+      </>}
+    </div>
+  );
+}
+
+function PaymentsTable({ payments, fresh }) {
+  return (
+    <div className="box">
+      <h3>📲 M-Pesa payments
+        <button className="gray" onClick={() => location.href = '/api/export?what=payments&date=' + today()}>⬇ Download today (Excel)</button>
+      </h3>
+      <table>
+        <thead><tr><th>Time</th><th>Name</th><th>Phone</th><th>KSh</th><th>Status</th><th>M-Pesa code</th></tr></thead>
+        <tbody>
+          {payments.length ? payments.map(p => {
+            const k = p.time + p.phone;
+            return (
+              <tr key={k} className={fresh.has(k) ? 'flash' : ''}>
+                <td>{p.time.slice(5, 16)}</td>
+                <td><Avatar name={p.name} /><b>{p.name}</b></td>
+                <td>{p.phone}</td>
+                <td><b>{p.amount}</b></td>
+                <td><span className={'pill ' + payCls(p.status)}>{payText(p.status)}</span></td>
+                <td><code>{p.mpesa_receipt || ''}</code></td>
+              </tr>);
+          }) : <tr><td colSpan="6" className="empty">📭 No payments yet - swipe a card</td></tr>}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function CardsTable({ cards, drafts, setDraft, onSave, onBlock }) {
+  const val = (c, f) => drafts[c.uid] && drafts[c.uid][f] !== undefined ? drafts[c.uid][f] : c[f];
+  return (
+    <table>
+      <thead><tr><th>Name</th><th>Phone</th><th>KSh per swipe</th><th>Now</th><th></th></tr></thead>
+      <tbody>
+        {cards.length ? cards.map(c => (
+          <tr key={c.uid}>
+            <td><Avatar name={val(c, 'name')} />
+              <input value={val(c, 'name')} onChange={e => setDraft(c.uid, 'name', e.target.value)} style={{ minWidth: 110, width: 150 }} /> <span className="muted">{c.uid}</span></td>
+            <td><input value={val(c, 'phone')} inputMode="tel" onChange={e => setDraft(c.uid, 'phone', e.target.value)} style={{ minWidth: 130 }} /></td>
+            <td><input value={val(c, 'price')} inputMode="numeric" onChange={e => setDraft(c.uid, 'price', e.target.value)} style={{ width: 80 }} /></td>
+            <td><span className={'pill ' + (c.blocked ? 'bad' : c.status === 'IN' ? 'ok' : 'idle')}>{c.blocked ? 'BLOCKED' : c.status}</span></td>
+            <td><button className="green" onClick={() => onSave(c)}>💾 Save</button> <button className="gray" onClick={() => onBlock(c)}>{c.blocked ? 'Unblock' : 'Block'}</button></td>
+          </tr>
+        )) : <tr><td colSpan="5" className="empty">🪪 No cards yet - tap one on the reader</td></tr>}
+      </tbody>
+    </table>
+  );
+}
+
+function TelcoPanel({ telco, post, say }) {
+  const [phone, setPhone] = useState(''), [text, setText] = useState('Hydra Pay SMS test');
+  const [simPhone, setSimPhone] = useState(''), [simText, setSimText] = useState(''), [out, setOut] = useState('');
+  const test = async () => { if (await post('/api/sms/test', { phone, text })) say('SMS queued'); };
+  const simulate = async () => {
+    const r = await fetch('/api/ussd/simulate', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone:simPhone,text:simText})});
+    const j = await r.json().catch(()=>({error:'Server error'})); setOut(j.error || ((j.end?'END ':'CON ')+j.message));
+  };
+  return <div className="box"><h3>SMS &amp; USSD</h3>
+    <div className="muted">SMS provider: <b>{telco ? telco.sms_provider : 'loading'}</b> &nbsp; USSD provider: <b>{telco ? telco.ussd_provider : 'loading'}</b>{telco?.ussd_code ? <> &nbsp; Code: <code>{telco.ussd_code}</code></> : null}</div>
+    {telco?.callbacks?.ussd ? <div className="muted" style={{marginTop:8}}>USSD callback: <code>{telco.callbacks.ussd}</code><br/>SMS delivery: <code>{telco.callbacks.delivery}</code></div> : <div className="muted" style={{marginTop:8}}>Set TELCO_CALLBACK_TOKEN and run ngrok to display callback URLs.</div>}
+    <div className="form"><div><label>Test SMS phone</label><input value={phone} onChange={e=>setPhone(e.target.value)} placeholder="0712 345 678" /></div><div><label>Message</label><input value={text} onChange={e=>setText(e.target.value)} /></div><div><button onClick={test}>Send test SMS</button></div></div>
+    <div className="form"><div><label>USSD simulator phone</label><input value={simPhone} onChange={e=>setSimPhone(e.target.value)} placeholder="0712 345 678" /></div><div><label>Full input (e.g. 1*1234)</label><input value={simText} onChange={e=>setSimText(e.target.value)} placeholder="Leave blank to start" /></div><div><button className="gray" onClick={simulate}>Run simulator</button></div></div>
+    {out && <pre className="muted" style={{whiteSpace:'pre-wrap'}}>{out}</pre>}
+  </div>;
+}
+
+function CardForm({ form, setForm, onSave, onCancel }) {
+  const set = k => e => setForm({ ...form, [k]: e.target.value });
+  const uidRef = useRef(), nameRef = useRef();
+  useEffect(() => { (form.uid ? nameRef : uidRef).current.focus(); }, []);
+  return (
+    <div className="form">
+      <div><label>Card UID (tap the card to fill this)</label><input ref={uidRef} value={form.uid} onChange={set('uid')} placeholder="C3 6E 01 28" /></div>
+      <div><label>Name</label><input ref={nameRef} value={form.name} onChange={set('name')} placeholder="e.g. John" /></div>
+      <div><label>Phone (M-Pesa / WhatsApp)</label><input value={form.phone} onChange={set('phone')} placeholder="07xx xxx xxx" inputMode="tel" /></div>
+      <div><label>KSh per swipe</label><input value={form.price} onChange={set('price')} inputMode="numeric" /></div>
+      <div style={{ display: 'flex', gap: 8 }}>
+        <button className="green" onClick={onSave}>Save</button>
+        <button className="gray" onClick={onCancel}>Cancel</button>
+      </div>
+    </div>
+  );
+}
+
+function App() {
+  const { data: D, down, fresh, reload } = usePolling(2000);
+  const [form, setForm] = useState(null);       // null = closed
+  const [drafts, setDrafts] = useState({});
+  const [toast, setToast] = useState(null);
+  const [telco, setTelco] = useState(null);
+  const PIN = useRef(null), toastT = useRef();
+
+  useEffect(() => { const load = () => fetch('/api/telco/status').then(r => r.ok ? r.json() : null).then(setTelco).catch(() => {}); load(); const id=setInterval(load,10000); return () => clearInterval(id); }, []);
+
+  const say = (msg, bad) => { setToast({ msg, bad }); clearTimeout(toastT.current); toastT.current = setTimeout(() => setToast(null), 4000); };
+  const setDraft = (uid, f, v) => setDrafts(d => ({ ...d, [uid]: { ...d[uid], [f]: v } }));
+  const openForm = (c = {}) => setForm({ uid: c.uid || '', name: c.name || '', phone: c.phone || '', price: c.price ?? (D ? D.default_price : 1) });
+
+  async function post(url, body) {
+    if (!PIN.current) { PIN.current = prompt('Admin PIN'); if (!PIN.current) return false; }
+    const r = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...body, pin: PIN.current }) });
+    const j = await r.json().catch(() => ({ error: 'Server error' }));
+    if (r.status === 403) PIN.current = null;
+    say(j.message || j.error, !r.ok);
+    return r.ok;
+  }
+  const saveForm = async () => { if (await post('/api/cards', form)) { setForm(null); reload(); } };
+  const saveRow = async c => {
+    const d = drafts[c.uid] || {};
+    const ok = await post('/api/cards', { uid: c.uid, name: d.name ?? c.name, phone: d.phone ?? c.phone, price: d.price ?? c.price });
+    if (ok) { setDrafts(x => { const n = { ...x }; delete n[c.uid]; return n; }); reload(); }
+  };
+  const moveCard = async (oldUid, newUid) => {
+    const old = D.cards.find(c => c.uid === oldUid);
+    if (!old || !confirm(`Move ${old.name} (and their history) to card ${newUid}? The old card stops working.`)) return;
+    if (await post('/api/cards/move', { old_uid: old.uid, new_uid: newUid })) reload();
+  };
+  const blockCard = async c => { if (await post('/api/cards/block', { uid:c.uid, blocked:!c.blocked })) reload(); };
+
+  if (down && !D) return <div className="wrap"><Chip off>Dashboard program is not running</Chip></div>;
+  if (!D) return <div className="wrap muted">Loading…</div>;
+
+  const sv = D.services, s = D.summary;
+  const paid = s.per_card.reduce((n, c) => n + c.paid_taps, 0);
+
+  return (
+    <div className="wrap">
+      <div className="top">
+        <div className="brand">
+          <div className="logo"><svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="3" /><path d="M2 10h20M6 15h4" /></svg></div>
+          <div><h1>RFID Pay</h1><div className="sub">Tap. Pay. Walk in.</div></div>
+        </div>
+        <div className="chips">
+          {down ? <Chip off>Dashboard program is not running</Chip>
+                : <Chip on={D.esp.connected} off={!D.esp.connected}>Reader {D.esp.connected ? 'connected' : 'not connected'}</Chip>}
+          <Chip on={sv.whatsapp}>WhatsApp</Chip><Chip on={sv.sms}>SMS</Chip><Chip on={sv.ussd_provider !== 'none'}>USSD</Chip><Chip on={sv.gemini}>AI</Chip><Chip on={sv.voice}>Voice</Chip>
+        </div>
+      </div>
+
+      {D.new_card && !form &&
+        <NewCardBanner key={D.new_card} uid={D.new_card} cards={D.cards} onRegister={uid => openForm({ uid })} onMove={moveCard} />}
+
+      <div className="tiles">
+        <StatTile icon="💰" label="Collected today" grad="linear-gradient(135deg,#10b981,#059669)"><CountUp to={Number(s.mpesa) || 0} prefix="KSh " /></StatTile>
+        <StatTile icon="✅" label="Paid swipes" grad="linear-gradient(135deg,#4f8cff,#3b6fe0)"><CountUp to={paid} /></StatTile>
+        <StatTile icon="🚫" label="Didn't pay" grad="linear-gradient(135deg,#ef4444,#b91c1c)"><CountUp to={Number(s.swipe_unpaid) || 0} /></StatTile>
+        <StatTile icon="👥" label="Inside now" grad="linear-gradient(135deg,#8b5cf6,#6d28d9)"><CountUp to={D.inside.length} /></StatTile>
+      </div>
+
+      <PaymentsTable payments={D.payments} fresh={fresh} />
+
+      <div className="box">
+        <h3>🪪 Cards <button className="green" onClick={() => openForm()}>＋ Add card</button></h3>
+        <div className="muted" style={{ marginBottom: 10 }}>Change a name, phone or price right in the table, then press Save. Card owners can also change their own number on WhatsApp (send <b>3</b>, or just the new number). Lost card? Tap the new one and use <b>Move to this card</b>.</div>
+        <CardsTable cards={D.cards} drafts={drafts} setDraft={setDraft} onSave={saveRow} onBlock={blockCard} />
+        {form && <CardForm form={form} setForm={setForm} onSave={saveForm} onCancel={() => setForm(null)} />}
+      </div>
+
+      <TelcoPanel telco={telco} post={post} say={say} />
+      <div id="links" className="muted">📱 Open on your phone (same WiFi): {D.lan_url}{D.public_url ? <> &nbsp;·&nbsp; 🌍 {D.public_url}</> : null}</div>
+      <Toast t={toast} />
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+</script>
+</body></html>

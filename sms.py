@@ -27,7 +27,7 @@ def send(phone, text, kind="notice", transactional=True, background=True):
     """Queue a logged SMS. Network failures retry twice; provider rejection does not."""
     phone, message, provider = store.to_254(phone), plain(text), telco.get_sms()
     user = store.get_ussd_user(phone)
-    if not phone or not message:
+    if provider.name == "none" or not phone or not message:
         return None
     if user and user.get("sms_opt_out") and not transactional:
         return store.add_sms(phone, kind, message, provider.name, "OPTED_OUT")

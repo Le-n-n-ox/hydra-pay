@@ -11,6 +11,7 @@ Usage:  python dashboard.py          (auto-detects the ESP32 port)
         python dashboard.py COM6     (force a port)
 """
 import secrets
+import os
 import socket
 import sys
 import threading
@@ -24,7 +25,9 @@ from serial.tools import list_ports
 
 import bot
 import mpesa
+import sms
 import store
+import telco
 import ussd
 import wallet
 import whatsapp
@@ -39,6 +42,7 @@ esp = {"port": None, "connected": False, "message": "Searching for ESP32..."}
 last_unknown = {"uid": None, "time": 0}
 
 app = Flask(__name__, static_folder=None)
+app.config["MAX_CONTENT_LENGTH"] = 64 * 1024
 secret_file = HERE / ".flask_secret"
 if not secret_file.exists():
     secret_file.write_text(secrets.token_hex(32))
@@ -129,7 +133,9 @@ def login():
 
 @app.before_request
 def require_login():
-    open_paths = ("/login", "/webhook", "/voice/", "/mpesa/callback", "/ussd")
+    if request.path == "/ussd":
+        return ("", 404)
+    open_paths = ("/login", "/webhook", "/voice/", "/mpesa/callback", "/ussd/", "/sms/")
     if not logged_in() and not request.path.startswith(open_paths):
         if request.path.startswith("/api/"):
             return jsonify(error="login required"), 401
@@ -160,7 +166,8 @@ def data():
                                       and not store.get_card(last_unknown["uid"])) else None
     return jsonify({
         "esp": esp,
-        "services": whatsapp.status(),
+        "services": {**whatsapp.status(), "sms": sms.enabled(), "sms_provider": telco.get_sms().name,
+                     "ussd_provider": telco.get_ussd().name},
         "lan_url": f"http://{lan_ip()}:{HTTP_PORT}",
         "public_url": whatsapp.public_url(),
         "cards": cards,
@@ -223,6 +230,17 @@ def move_card():
     return jsonify(ok=True, message=f"{card['name']} now uses card {new_uid}")
 
 
+@app.route("/api/cards/block", methods=["POST"])
+def block_card():
+    b = body()
+    if not pin_ok(b.get("pin")):
+        return jsonify(error="Wrong admin PIN"), 403
+    card = store.set_card_blocked(str(b.get("uid", "")).strip().upper(), bool(b.get("blocked", True)))
+    if not card:
+        return jsonify(error="Card not found"), 404
+    return jsonify(ok=True, message=f"{card['name']} {'blocked' if card['blocked'] else 'unblocked'}")
+
+
 @app.route("/api/topup/mpesa", methods=["POST"])
 def topup_mpesa():
     b = body()
@@ -282,18 +300,111 @@ def _confirm_callback(pid, checkout_id, code):
         store.update_payment(pid, mpesa_receipt=code)
 
 
-# ---------- USSD (Africa's Talking) ----------
+# ---------- provider-neutral SMS / USSD ----------
 
-@app.route("/ussd", methods=["POST"])
-def ussd_route():
-    f = request.values
+def _telco_allowed(token):
+    expected = os.getenv("TELCO_CALLBACK_TOKEN", "")
+    if not expected or not secrets.compare_digest(str(token or ""), expected):
+        return False
+    allowed = {ip.strip() for ip in os.getenv("TELCO_ALLOWED_IPS", "").split(",") if ip.strip()}
+    if not allowed:
+        return True
+    remote = request.remote_addr or ""
+    # ngrok is the one trusted proxy this launcher configures; do not trust an arbitrary XFF header.
+    if request.headers.get("X-Forwarded-Host"):
+        remote = (request.headers.get("X-Forwarded-For", remote).split(",")[0].strip())
+    return remote in allowed
+
+
+def _masked(phone):
+    phone = str(phone or "")
+    return "***" + phone[-3:] if phone else ""
+
+
+@app.route("/ussd/<token>", methods=["POST"])
+def ussd_route(token):
+    provider = telco.get_ussd()
+    if provider.name == "none" or not _telco_allowed(token) or not provider.verify(request):
+        return ("", 404)
     try:
-        reply = ussd.handle(f.get("phoneNumber", ""), f.get("text", ""))
-    except Exception as e:
-        print(f"[USSD] error: {e}")
-        reply = "END Sorry, something went wrong. Try again."
-    print(f"[USSD] {f.get('phoneNumber', '')} '{f.get('text', '')}' -> {reply.splitlines()[0]}")
-    return Response(reply, mimetype="text/plain")
+        ussd_request = provider.parse(request)
+        if os.getenv("TELCO_DEBUG", "0") == "1":
+            print(f"[USSD {provider.name}] phone={_masked(ussd_request.phone)} session={ussd_request.session_id}")
+        reply = ussd.handle(ussd_request)
+        return provider.render(reply)
+    except Exception as exc:
+        print(f"[USSD] error: {exc}")
+        return provider.render(ussd.UssdReply("Sorry, try again later.", True))
+
+
+@app.route("/sms/delivery/<token>", methods=["POST"])
+def sms_delivery(token):
+    provider = telco.get_sms()
+    if provider.name == "none" or not _telco_allowed(token) or not provider.verify(request):
+        return ("", 404)
+    sms.delivery(request)
+    return Response("OK", mimetype="text/plain")
+
+
+@app.route("/sms/inbound/<token>", methods=["POST"])
+def sms_inbound(token):
+    provider = telco.get_sms()
+    if provider.name == "none" or not _telco_allowed(token) or not provider.verify(request):
+        return ("", 404)
+    reply = sms.inbound(request)
+    inbound = provider.parse_inbound(request)
+    if reply and inbound and inbound.phone:
+        sms.send(inbound.phone, reply, "inbound")
+    return Response("OK", mimetype="text/plain")
+
+
+@app.route("/api/telco/status")
+def telco_status():
+    base = whatsapp.public_url().rstrip("/")
+    token = os.getenv("TELCO_CALLBACK_TOKEN", "")
+    urls = {} if not (base and token) else {
+        "ussd": f"{base}/ussd/{token}", "delivery": f"{base}/sms/delivery/{token}",
+        "inbound": f"{base}/sms/inbound/{token}",
+    }
+    return jsonify(sms_provider=telco.get_sms().name, ussd_provider=telco.get_ussd().name,
+                   ussd_code=wallet.settings().get("ussd_code", ""), callbacks=urls,
+                   sms=store.recent_sms(20), sessions=store.recent_ussd_sessions(20),
+                   settings={k: wallet.settings().get(k) for k in ("ussd_code", "admin_phone", "sms_receipts",
+                             "sms_when_whatsapp_fails", "sms_low_balance", "ussd_pin_required")})
+
+
+@app.route("/api/sms/test", methods=["POST"])
+def sms_test():
+    b = body()
+    if not pin_ok(b.get("pin")):
+        return jsonify(error="Wrong admin PIN"), 403
+    phone = store.to_254(b.get("phone", ""))
+    if not phone:
+        return jsonify(error="Enter a phone number"), 400
+    row = sms.send(phone, b.get("text") or "Hydra Pay SMS test.", "test")
+    return jsonify(ok=bool(row), message="SMS queued" if row else "SMS is disabled or number is invalid")
+
+
+@app.route("/api/ussd/simulate", methods=["POST"])
+def ussd_simulate():
+    from telco.base import UssdRequest
+    b = body()
+    phone = store.to_254(b.get("phone", ""))
+    if not phone:
+        return jsonify(error="Enter a phone number"), 400
+    req = UssdRequest(str(b.get("session_id") or f"sim-{phone}"), str(b.get("service_code") or "SIM"),
+                      phone, str(b.get("text", "")))
+    reply = ussd.handle(req)
+    return jsonify(message=reply.message, end=reply.end)
+
+
+@app.route("/api/telco/settings", methods=["POST"])
+def telco_settings():
+    b = body()
+    if not pin_ok(b.get("pin")):
+        return jsonify(error="Wrong admin PIN"), 403
+    saved = wallet.update_settings(b)
+    return jsonify(ok=True, settings={k: saved.get(k) for k in b if k != "pin"})
 
 
 # ---------- WhatsApp ----------
@@ -335,12 +446,31 @@ def connect_whatsapp():
           "(receipts still go out). Start it with: ngrok http 8000")
 
 
+def connect_telco():
+    sms_provider, ussd_provider = telco.get_sms(), telco.get_ussd()
+    print(f"Telco: SMS={sms_provider.name} | USSD={ussd_provider.name}")
+    if sms_provider.name == "none" and ussd_provider.name == "none":
+        return
+    token = os.getenv("TELCO_CALLBACK_TOKEN", "")
+    if not token:
+        print("Telco: TELCO_CALLBACK_TOKEN is missing; public telco callbacks are disabled")
+        return
+    base = whatsapp.public_url()
+    if not base:
+        print("Telco: start ngrok or set TELCO_CALLBACK_BASE_URL, then configure the provider callbacks")
+        return
+    print(f"USSD callback: {base}/ussd/{token}")
+    print(f"SMS delivery: {base}/sms/delivery/{token}")
+    print(f"SMS inbound: {base}/sms/inbound/{token}")
+
+
 if __name__ == "__main__":
     import logging
     logging.getLogger("werkzeug").setLevel(logging.ERROR)   # hide the per-request log lines
     store.init(wallet.settings().get("default_price", 1))
     threading.Thread(target=serial_loop, daemon=True).start()
     threading.Thread(target=connect_whatsapp, daemon=True).start()
+    threading.Thread(target=connect_telco, daemon=True).start()
     threading.Thread(target=wallet.recheck_stuck, daemon=True).start()
     print(f"Dashboard: http://localhost:{HTTP_PORT}   phone on same WiFi: http://{lan_ip()}:{HTTP_PORT}")
     if "--no-browser" not in sys.argv:

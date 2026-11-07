@@ -9,6 +9,15 @@
   "notify_taps": true,
   "voice_replies": true,
   "voice_receipts": true,
+  "ussd_code": "",
+  "ussd_language_default": "en",
+  "ussd_pin_required": true,
+  "ussd_max_prompts_per_hour": 5,
+  "sms_receipts": true,
+  "sms_when_whatsapp_fails": true,
+  "sms_low_balance": true,
+  "sms_admin_alerts": true,
+  "admin_phone": "",
   "admin_whatsapp": "",
   "auto_set_webhook": true
 }
