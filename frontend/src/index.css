@@ -70,6 +70,18 @@
   html {
     @apply font-sans;
     }
+  /* Big monitors and TVs: scale the whole UI up (all sizes are in rem) so it isn't tiny. */
+  @media (min-width: 1920px) {
+    html { font-size: 106.25%; }
+  }
+  @media (min-width: 2400px) {
+    html { font-size: 125%; }
+  }
+  /* Grid columns shrink to the screen instead of stretching to their widest content
+     (otherwise long text or charts push cards off the right edge on phones). */
+  .grid > * {
+    min-width: 0;
+    }
 }
 @layer components {
   .glass {

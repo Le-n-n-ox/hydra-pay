@@ -35,7 +35,29 @@ export function ActivityView({ scans, transactions, cards, reload }: { scans: Sc
 
           <TabsContent value="taps">
             {scans.length ? (
-              <Table>
+              <>
+              <ul className="divide-y divide-foreground/[0.05] md:hidden">
+                {scans.map((s) => (
+                  <li key={s.id} className="flex items-center gap-3 px-4 py-3">
+                    <PersonAvatar name={names.get(s.uid) || '?'} className="size-9 text-[11px]" />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-baseline justify-between gap-3">
+                        <p className="truncate font-medium">{names.get(s.uid) || 'Unregistered'}</p>
+                        <span className="shrink-0 text-xs tabular-nums text-muted-foreground">{shortTime(s.time)}</span>
+                      </div>
+                      <div className="mt-1 flex items-center gap-2">
+                        <span className="flex shrink-0 items-center gap-1 text-xs">
+                          {s.direction === 'IN' ? <ArrowDownLeft className="size-3.5 text-good" /> : <ArrowUpRight className="size-3.5 text-muted-foreground" />}
+                          {s.direction}
+                        </span>
+                        <Pill tone={resultTone(s.result)} className="min-w-0 truncate">{s.result}</Pill>
+                        {s.amount ? <span className="ml-auto shrink-0 text-sm tabular-nums">KSh {s.amount}</span> : null}
+                      </div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+              <Table className="hidden md:table">
                 <TableHeader>
                   <TableRow className="hover:bg-transparent">
                     <TableHead className="pl-5">Time</TableHead>
@@ -71,6 +93,7 @@ export function ActivityView({ scans, transactions, cards, reload }: { scans: Sc
                   ))}
                 </TableBody>
               </Table>
+              </>
             ) : (
               <EmptyState icon={Radio} title="No taps yet" hint="Every tap on the reader is logged here." />
             )}
@@ -78,7 +101,29 @@ export function ActivityView({ scans, transactions, cards, reload }: { scans: Sc
 
           <TabsContent value="wallet">
             {transactions.length ? (
-              <Table>
+              <>
+              <ul className="divide-y divide-foreground/[0.05] md:hidden">
+                {transactions.map((t) => (
+                  <li key={t.id} className={`flex items-center gap-3 px-4 py-3 ${t.reversed ? 'opacity-50' : ''}`}>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-baseline justify-between gap-3">
+                        <p className="truncate font-medium">{names.get(t.uid) || t.uid}</p>
+                        <p className={`shrink-0 font-semibold tabular-nums ${t.amount >= 0 ? 'text-good' : 'text-bad'}`}>{t.amount >= 0 ? '+' : ''}{t.amount}</p>
+                      </div>
+                      <div className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+                        <Pill tone={t.kind.startsWith('TOPUP') ? 'green' : t.kind === 'REVERSAL' ? 'amber' : 'blue'}>{t.label}</Pill>
+                        {t.reversed ? <Pill>reversed</Pill> : null}
+                        <span className="tabular-nums">{shortTime(t.time)}</span>
+                        <span className="ml-auto tabular-nums">Balance {t.balance_after}</span>
+                      </div>
+                    </div>
+                    {t.kind.startsWith('TOPUP') && !t.reversed && (
+                      <Button size="icon-sm" variant="outline" aria-label="Undo top-up" onClick={() => undo(t)}><RotateCcw /></Button>
+                    )}
+                  </li>
+                ))}
+              </ul>
+              <Table className="hidden md:table">
                 <TableHeader>
                   <TableRow className="hover:bg-transparent">
                     <TableHead className="pl-5">Time</TableHead>
@@ -113,6 +158,7 @@ export function ActivityView({ scans, transactions, cards, reload }: { scans: Sc
                   ))}
                 </TableBody>
               </Table>
+              </>
             ) : (
               <EmptyState icon={History} title="No wallet transactions" hint="Top-ups, tap charges and reversals appear here." />
             )}

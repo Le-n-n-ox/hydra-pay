@@ -103,11 +103,27 @@ def is_local():
 
 
 def logged_in():
-    return is_local() or session.get("ok")
+    # The dashboard is open to anyone with the link (no password to view it).
+    # Every change still needs the admin PIN: see admin_denied().
+    return True
 
 
 def pin_ok(pin):
     return secrets.compare_digest(str(pin or ""), str(wallet.settings().get("admin_pin", "1234")))
+
+
+def admin_denied(b):
+    """Return an error response if this change isn't allowed, else None.
+
+    The default PIN 1234 only works on this laptop, so strangers on the public link
+    can't guess it. (The message avoids the word "PIN" so the dashboard shows it
+    instead of asking for the PIN again.)"""
+    if not is_local() and str(wallet.settings().get("admin_pin", "1234")) == "1234":
+        return jsonify(error="Changes over the internet are off until the admin code in settings.json "
+                             "is changed from 1234. Then restart the dashboard."), 403
+    if not pin_ok(b.get("pin")):
+        return jsonify(error="Wrong admin PIN"), 403
+    return None
 
 
 LOGIN_PAGE = """<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
@@ -120,16 +136,7 @@ input,button{padding:12px;border-radius:8px;border:0;font-size:16px}button{backg
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
-    if str(wallet.settings().get("admin_pin", "1234")) == "1234":
-        return LOGIN_PAGE % ('<div class="err">Remote login is off until you change "admin_pin" in settings.json '
-                             '(it is still 1234). Then restart the dashboard.</div>')
-    if request.method == "POST":
-        if pin_ok(request.form.get("pin")):
-            session["ok"] = True
-            return redirect("/dashboard")
-        time.sleep(1)
-        return LOGIN_PAGE % '<div class="err">Wrong PIN</div>'
-    return LOGIN_PAGE % ""
+    return redirect("/dashboard")
 
 
 @app.before_request
@@ -224,8 +231,8 @@ def amount_of(b):
 @app.route("/api/cards", methods=["POST"])
 def save_card():
     b = body()
-    if not pin_ok(b.get("pin")):
-        return jsonify(error="Wrong admin PIN"), 403
+    if (denied := admin_denied(b)):
+        return denied
     uid = str(b.get("uid", "")).strip().upper()
     name = str(b.get("name", "")).strip()
     if not uid or not name:
@@ -244,8 +251,8 @@ def save_card():
 @app.route("/api/cards/move", methods=["POST"])
 def move_card():
     b = body()
-    if not pin_ok(b.get("pin")):
-        return jsonify(error="Wrong admin PIN"), 403
+    if (denied := admin_denied(b)):
+        return denied
     old_uid = str(b.get("old_uid", "")).strip().upper()
     new_uid = str(b.get("new_uid", "")).strip().upper()
     card = store.move_card(old_uid, new_uid)
@@ -260,8 +267,8 @@ def move_card():
 @app.route("/api/cards/block", methods=["POST"])
 def block_card():
     b = body()
-    if not pin_ok(b.get("pin")):
-        return jsonify(error="Wrong admin PIN"), 403
+    if (denied := admin_denied(b)):
+        return denied
     card = store.set_card_blocked(str(b.get("uid", "")).strip().upper(), bool(b.get("blocked", True)))
     if not card:
         return jsonify(error="Card not found"), 404
@@ -271,6 +278,8 @@ def block_card():
 @app.route("/api/topup/mpesa", methods=["POST"])
 def topup_mpesa():
     b = body()
+    if (denied := admin_denied(b)):
+        return denied
     ok, msg = wallet.start_mpesa_topup(b.get("uid"), amount_of(b), source="dashboard")
     return (jsonify(ok=True, message=msg) if ok else (jsonify(error=msg), 400))
 
@@ -278,16 +287,16 @@ def topup_mpesa():
 @app.route("/api/topup/cash", methods=["POST"])
 def topup_cash():
     b = body()
-    if not pin_ok(b.get("pin")):
-        return jsonify(error="Wrong admin PIN"), 403
+    if (denied := admin_denied(b)):
+        return denied
     tx, msg = wallet.cash_topup(b.get("uid"), amount_of(b))
     return (jsonify(ok=True, message=msg) if tx else (jsonify(error=msg), 400))
 
 
 @app.route("/api/undo/<int:tx_id>", methods=["POST"])
 def undo(tx_id):
-    if not pin_ok(body().get("pin")):
-        return jsonify(error="Wrong admin PIN"), 403
+    if (denied := admin_denied(body())):
+        return denied
     tx, msg = wallet.undo(tx_id)
     return (jsonify(ok=True, message=msg) if tx else (jsonify(error=msg), 400))
 
@@ -403,8 +412,8 @@ def telco_status():
 @app.route("/api/sms/test", methods=["POST"])
 def sms_test():
     b = body()
-    if not pin_ok(b.get("pin")):
-        return jsonify(error="Wrong admin PIN"), 403
+    if (denied := admin_denied(b)):
+        return denied
     phone = store.to_254(b.get("phone", ""))
     if not phone:
         return jsonify(error="Enter a phone number"), 400
@@ -416,6 +425,8 @@ def sms_test():
 def ussd_simulate():
     from telco.base import UssdRequest
     b = body()
+    if (denied := admin_denied(b)):
+        return denied
     phone = store.to_254(b.get("phone", ""))
     if not phone:
         return jsonify(error="Enter a phone number"), 400
@@ -428,8 +439,8 @@ def ussd_simulate():
 @app.route("/api/telco/settings", methods=["POST"])
 def telco_settings():
     b = body()
-    if not pin_ok(b.get("pin")):
-        return jsonify(error="Wrong admin PIN"), 403
+    if (denied := admin_denied(b)):
+        return denied
     saved = wallet.update_settings(b)
     return jsonify(ok=True, settings={k: saved.get(k) for k in b if k != "pin"})
 

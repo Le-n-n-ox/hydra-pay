@@ -80,11 +80,11 @@ const payStyles = {
   waiting: { cls: 'bg-amber-500/15 text-warn ring-amber-500/30', Icon: Clock },
 }
 
-export function PaymentBadge({ status }: { status: string }) {
+export function PaymentBadge({ status, className }: { status: string; className?: string }) {
   const st = payState(status)
   const { cls, Icon } = payStyles[st]
   return (
-    <span className={cn('inline-flex min-w-0 max-w-[16rem] shrink items-center gap-1.5 truncate rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset', cls)}>
+    <span title={payLabel(status)} className={cn('inline-flex min-w-0 max-w-[16rem] shrink items-center gap-1.5 truncate rounded-full px-2.5 py-1 text-xs font-medium ring-1 ring-inset', cls, className)}>
       <Icon className={cn('size-3.5 shrink-0', st === 'waiting' && 'animate-spin [animation-duration:3s]')} />
       <span className="truncate">{payLabel(status)}</span>
     </span>

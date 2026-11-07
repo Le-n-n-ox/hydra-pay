@@ -53,13 +53,13 @@ export function Payments({ payments, fresh }: { payments: Payment[]; fresh: Set<
     <motion.div variants={stagger} initial="hidden" animate="show">
       <Panel title="M-Pesa payments" icon={Smartphone} bodyClassName="p-0" action={<ExportMenu />}>
         <div className="flex flex-wrap items-center gap-3 border-b border-foreground/[0.06] px-5 py-3">
-          <div className="relative min-w-52 flex-1">
+          <div className="relative min-w-0 flex-1 basis-56">
             <Search className="pointer-events-none absolute left-3 top-1/2 z-10 size-4 -translate-y-1/2 text-muted-foreground" />
             <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search name, phone or M-Pesa code" className="pl-9" />
           </div>
-          <div className="flex rounded-lg bg-foreground/5 p-1 ring-1 ring-foreground/10">
+          <div className="flex w-full rounded-lg bg-foreground/5 p-1 ring-1 ring-foreground/10 sm:w-auto">
             {filters.map((f) => (
-              <button key={f.id} onClick={() => setFilter(f.id)} className={cn('relative rounded-md px-3 py-1 text-sm transition-colors', filter === f.id ? 'text-foreground' : 'text-muted-foreground hover:text-foreground')}>
+              <button key={f.id} onClick={() => setFilter(f.id)} className={cn('relative flex-1 rounded-md px-3 py-1 text-sm transition-colors sm:flex-none', filter === f.id ? 'text-foreground' : 'text-muted-foreground hover:text-foreground')}>
                 {filter === f.id && <motion.span layoutId="pay-filter" className="absolute inset-0 rounded-md bg-primary/25 ring-1 ring-primary/40" transition={{ type: 'spring', stiffness: 400, damping: 32 }} />}
                 <span className="relative">{f.label}</span>
               </button>
@@ -67,7 +67,38 @@ export function Payments({ payments, fresh }: { payments: Payment[]; fresh: Set<
           </div>
         </div>
         {rows.length ? (
-          <Table>
+          <>
+          <ul className="divide-y divide-foreground/[0.05] md:hidden">
+            <AnimatePresence initial={false}>
+              {rows.map((p) => (
+                <motion.li
+                  key={p.id}
+                  layout
+                  initial={fresh.has(p.id) ? { opacity: 0, x: -20, backgroundColor: 'rgba(52,211,153,0.25)' } : false}
+                  animate={{ opacity: 1, x: 0, backgroundColor: 'rgba(52,211,153,0)' }}
+                  transition={{ duration: 1.2 }}
+                  className="flex items-start gap-3 px-4 py-3"
+                >
+                  <PersonAvatar name={p.name || p.phone} className="mt-0.5 size-9 text-[11px]" />
+                  <div className="min-w-0 flex-1 space-y-1.5">
+                    <div className="flex items-baseline justify-between gap-3">
+                      <p className="truncate font-medium">{p.name || p.phone}</p>
+                      <p className="shrink-0 font-semibold tabular-nums">KSh {p.amount}</p>
+                    </div>
+                    <div className="flex items-center justify-between gap-3 text-xs text-muted-foreground">
+                      <span className="truncate tabular-nums">{p.phone}</span>
+                      <span className="shrink-0 tabular-nums">{shortTime(p.time)}</span>
+                    </div>
+                    <div className="flex items-center justify-between gap-3">
+                      <PaymentBadge status={p.status} />
+                      {p.mpesa_receipt && <span className="shrink-0 font-mono text-xs text-brand-text">{p.mpesa_receipt}</span>}
+                    </div>
+                  </div>
+                </motion.li>
+              ))}
+            </AnimatePresence>
+          </ul>
+          <Table className="hidden md:table">
             <TableHeader>
               <TableRow className="hover:bg-transparent">
                 <TableHead className="pl-5">Time</TableHead>
@@ -105,6 +136,7 @@ export function Payments({ payments, fresh }: { payments: Payment[]; fresh: Set<
               </AnimatePresence>
             </TableBody>
           </Table>
+          </>
         ) : (
           <EmptyState icon={Smartphone} title={payments.length ? 'No payments match' : 'No payments yet'} hint={payments.length ? 'Try a different search or filter.' : 'Tap a card to send the first M-Pesa prompt.'} />
         )}

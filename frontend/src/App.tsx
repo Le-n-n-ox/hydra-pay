@@ -228,11 +228,11 @@ export default function App() {
   return (
     <>
       <Background />
-      <div className="mx-auto flex max-w-[1600px] gap-5 p-4 pb-24 lg:pb-4">
+      <div className="mx-auto flex max-w-[1600px] gap-5 p-3 pb-24 sm:p-4 lg:pb-4 2xl:max-w-[118rem] 2xl:gap-6 2xl:p-6">
         <Sidebar view={view} setView={setView} data={data} />
 
         <main className="min-w-0 flex-1 overflow-x-clip">
-          <header className="sticky top-0 z-20 -mx-4 mb-5 flex flex-wrap items-center justify-between gap-3 px-4 py-3 backdrop-blur-md lg:static lg:mx-0 lg:px-0 lg:py-0 lg:backdrop-blur-none">
+          <header className="sticky top-0 z-20 -mx-3 mb-5 flex flex-wrap items-center justify-between gap-3 px-3 py-3 sm:-mx-4 sm:px-4 backdrop-blur-md lg:static lg:mx-0 lg:px-0 lg:py-0 lg:backdrop-blur-none">
             <div className="flex items-center gap-3">
               <div className="lg:hidden"><Logo /></div>
               <AnimatePresence mode="wait">

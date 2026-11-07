@@ -31,7 +31,7 @@ export function Cards({ cards, perCard, mode, onAdd, onEdit, onTopup, reload }: 
   return (
     <motion.div variants={stagger} initial="hidden" animate="show" className="grid gap-5">
       <motion.div variants={fadeUp} className="flex flex-wrap items-center gap-3">
-        <div className="relative min-w-52 flex-1">
+        <div className="relative min-w-0 flex-1 basis-56">
           <Search className="pointer-events-none absolute left-3 top-1/2 z-10 size-4 -translate-y-1/2 text-muted-foreground" />
           <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search by name, phone or UID" className="glass h-10 pl-9" />
         </div>
@@ -45,7 +45,7 @@ export function Cards({ cards, perCard, mode, onAdd, onEdit, onTopup, reload }: 
       </motion.p>
 
       {rows.length ? (
-        <motion.div variants={stagger} className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <motion.div variants={stagger} className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
           <AnimatePresence>
             {rows.map((c) => {
               const st = stats.get(c.uid)
@@ -67,7 +67,7 @@ export function Cards({ cards, perCard, mode, onAdd, onEdit, onTopup, reload }: 
                     <span className="absolute left-4 top-4 font-mono text-xs tracking-widest text-white/75">{c.uid}</span>
                   </div>
                   <div className="p-4 pt-0">
-                    <div className="-mt-6 flex items-end justify-between">
+                    <div className="relative -mt-6 flex items-end justify-between">
                       <PersonAvatar name={c.name} className="size-12 text-sm ring-4 ring-background" />
                       <div className="flex items-center gap-1.5">
                         {c.blocked ? <Pill tone="red"><Ban className="size-3" />Blocked</Pill> : c.status === 'IN' ? <Pill tone="green">IN</Pill> : <Pill>OUT</Pill>}
