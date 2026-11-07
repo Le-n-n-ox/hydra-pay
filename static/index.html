@@ -1,0 +1,145 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>RFID Pay</title>
+<style>
+ *{box-sizing:border-box}
+ body{font-family:Segoe UI,sans-serif;background:#111827;color:#e5e7eb;margin:0;padding:20px;max-width:1100px;margin:auto}
+ h1{margin:0 0 4px} h3{margin:0 0 12px;display:flex;justify-content:space-between;align-items:center}
+ .muted{color:#9ca3af;font-size:14px}
+ .dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px}
+ .tiles{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin:18px 0}
+ .tile{background:#1f2937;border-radius:10px;padding:14px 16px}
+ .tile b{display:block;font-size:28px;margin-top:4px}
+ .box{background:#1f2937;border-radius:10px;padding:16px;margin-bottom:18px;overflow-x:auto}
+ table{width:100%;border-collapse:collapse;font-size:14px} td,th{padding:9px 8px;text-align:left;border-bottom:1px solid #374151;white-space:nowrap}
+ th{color:#9ca3af;font-weight:600}
+ .ok{color:#34d399;font-weight:bold} .bad{color:#f87171;font-weight:bold} .wait{color:#fbbf24;font-weight:bold}
+ code{color:#93c5fd}
+ button{background:#2563eb;color:#fff;border:0;border-radius:6px;padding:7px 12px;cursor:pointer;font-size:13px}
+ button.green{background:#059669} button.gray{background:#4b5563}
+ input{background:#111827;color:#e5e7eb;border:1px solid #374151;border-radius:6px;padding:9px;font-size:15px;width:100%}
+ .form{display:none;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px;align-items:end;margin-top:14px}
+ .form.show{display:grid}
+ .form label{font-size:13px;color:#9ca3af}
+ .banner{background:#78350f;border:1px solid #f59e0b;border-radius:10px;padding:14px;margin-bottom:18px}
+ #toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);padding:12px 18px;border-radius:8px;display:none;max-width:90%}
+</style></head><body>
+
+<h1>💳 RFID Pay</h1>
+<div id="status" class="muted"></div>
+
+<div id="newcard"></div>
+
+<div class="tiles">
+ <div class="tile">Collected today<b id="t_money">KSh 0</b></div>
+ <div class="tile">Paid swipes<b id="t_paid">0</b></div>
+ <div class="tile">Didn't pay<b id="t_unpaid">0</b></div>
+ <div class="tile">Inside now<b id="t_in">0</b></div>
+</div>
+
+<div class="box">
+ <h3>M-Pesa payments <button class="gray" onclick="location.href='/api/export?what=payments&date='+today()">⬇ Download today (Excel)</button></h3>
+ <table><thead><tr><th>Time</th><th>Name</th><th>Phone</th><th>KSh</th><th>Status</th><th>M-Pesa code</th></tr></thead><tbody id="pay"></tbody></table>
+</div>
+
+<div class="box">
+ <h3>Cards <button class="green" onclick="openForm()">+ Add card</button></h3>
+ <div class="muted" style="margin-bottom:8px">Change a name, phone or price right in the table, then press Save. Card owners can also change their own number on WhatsApp (send <b>3</b>, or just the new number). Lost card? Tap the new one and use <b>Move to this card</b>.</div>
+ <table><thead><tr><th>Name</th><th>Phone</th><th>KSh per swipe</th><th>Now</th><th></th></tr></thead><tbody id="cards"></tbody></table>
+ <div class="form" id="form">
+  <div><label>Card UID (tap the card to fill this)</label><input id="f_uid" placeholder="C3 6E 01 28"></div>
+  <div><label>Name</label><input id="f_name" placeholder="e.g. John"></div>
+  <div><label>Phone (M-Pesa / WhatsApp)</label><input id="f_phone" placeholder="07xx xxx xxx" inputmode="tel"></div>
+  <div><label>KSh per swipe</label><input id="f_price" inputmode="numeric"></div>
+  <div><button class="green" onclick="saveCard()">Save</button> <button class="gray" onclick="closeForm()">Cancel</button></div>
+ </div>
+</div>
+
+<div id="links" class="muted"></div>
+<div id="toast"></div>
+
+<script>
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const today = () => new Date(Date.now() - new Date().getTimezoneOffset()*60000).toISOString().slice(0,10);
+let D = null, PIN = null;
+
+function toast(msg, bad){ const t=$('toast'); t.textContent=msg; t.style.background=bad?'#991b1b':'#065f46'; t.style.display='block'; clearTimeout(t._h); t._h=setTimeout(()=>t.style.display='none',4000); }
+function openForm(c){ c = c || {}; $('f_uid').value=c.uid||''; $('f_name').value=c.name||''; $('f_phone').value=c.phone||'';
+  $('f_price').value = c.price ?? (D ? D.default_price : 1); $('form').classList.add('show'); (c.uid ? $('f_name') : $('f_uid')).focus(); }
+function closeForm(){ $('form').classList.remove('show'); }
+const formOpen = () => $('form').classList.contains('show');
+function editCard(uid){ openForm(D.cards.find(c => c.uid === uid)); }
+function registerNew(uid){ openForm({uid}); }
+
+async function sendCard(card){
+  if(!PIN){ PIN = prompt('Admin PIN'); if(!PIN) return false; }
+  const r = await fetch('/api/cards', {method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({...card, pin:PIN})});
+  const j = await r.json().catch(()=>({error:'Server error'}));
+  if(r.status === 403) PIN = null;
+  toast(j.message || j.error, !r.ok);
+  return r.ok;
+}
+async function saveCard(){
+  if(await sendCard({uid:$('f_uid').value, name:$('f_name').value, phone:$('f_phone').value, price:$('f_price').value})){ closeForm(); refresh(); }
+}
+async function moveCard(newUid){
+  const old = D.cards.find(c => c.uid === $('mv').value);
+  if(!old || !confirm(`Move ${old.name} (and their history) to card ${newUid}? The old card stops working.`)) return;
+  if(!PIN){ PIN = prompt('Admin PIN'); if(!PIN) return; }
+  const r = await fetch('/api/cards/move', {method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({old_uid: old.uid, new_uid: newUid, pin: PIN})});
+  const j = await r.json().catch(()=>({error:'Server error'}));
+  if(r.status === 403) PIN = null;
+  toast(j.message || j.error, !r.ok);
+  if(r.ok){ $('newcard').innerHTML = ''; refresh(); }
+}
+async function saveRow(i){
+  document.activeElement && document.activeElement.blur();
+  if(await sendCard({uid:D.cards[i].uid, name:$('n'+i).value, phone:$('p'+i).value, price:$('k'+i).value})) refresh();
+}
+
+const payCls = s => s === 'PAID' ? 'ok' : /^(FAILED|NOT PAID)/.test(s) ? 'bad' : 'wait';
+const payText = s => s === 'PAID' ? '✅ Paid' : s.startsWith('Prompt sent') ? '⏳ Waiting for PIN' : s.startsWith('Sending') ? '⏳ Sending...'
+  : s.replace(/^NOT PAID: /, '❌ ').replace(/^FAILED: /, '⚠️ ');
+
+async function refresh(){
+  try{
+    const r = await fetch('/api/data?date=' + today());
+    if(r.status === 401){ location.href = '/login'; return; }
+    D = await r.json();
+  }catch(e){ $('status').innerHTML = '<span class="dot" style="background:#f87171"></span>Dashboard program is not running'; return; }
+  const sv = D.services, on = b => b ? '🟢' : '⚪';
+  $('status').innerHTML = `<span class="dot" style="background:${D.esp.connected?'#34d399':'#f87171'}"></span>Reader: ${D.esp.connected?'connected':'not connected'}
+    &nbsp; ${on(sv.whatsapp)} WhatsApp &nbsp; ${on(sv.gemini)} AI &nbsp; ${on(sv.voice)} Voice`;
+  $('links').innerHTML = `📱 Open on your phone (same WiFi): ${esc(D.lan_url)}` + (D.public_url ? ` &nbsp;·&nbsp; 🌍 ${esc(D.public_url)}` : '');
+
+  if(!document.activeElement || !document.activeElement.closest('#newcard'))
+  $('newcard').innerHTML = D.new_card && !formOpen() ? `<div class="banner">🆕 New card tapped: <code>${esc(D.new_card)}</code>
+     <button class="green" onclick="registerNew('${esc(D.new_card)}')">Register it</button>
+     ${D.cards.length ? `&nbsp; or give it to <select id="mv">${D.cards.map(c => `<option value="${esc(c.uid)}">${esc(c.name)} (${esc(c.phone)})</option>`).join('')}</select>
+     <button class="gray" onclick="moveCard('${esc(D.new_card)}')">Move to this card</button>` : ''}</div>` : '';
+
+  const s = D.summary, paid = s.per_card.reduce((n, c) => n + c.paid_taps, 0);
+  $('t_money').textContent = 'KSh ' + s.mpesa; $('t_paid').textContent = paid;
+  $('t_unpaid').textContent = s.swipe_unpaid; $('t_in').textContent = D.inside.length;
+
+  $('pay').innerHTML = D.payments.length ? D.payments.map(p => `<tr><td>${esc(p.time.slice(5,16))}</td><td><b>${esc(p.name)}</b></td>
+    <td>${esc(p.phone)}</td><td>${esc(p.amount)}</td><td class="${payCls(p.status)}">${esc(payText(p.status))}</td>
+    <td><code>${esc(p.mpesa_receipt || '')}</code></td></tr>`).join('')
+    : '<tr><td colspan="6">No payments yet - swipe a card</td></tr>';
+
+  // don't redraw the cards table while someone is typing in it
+  if(!document.activeElement || !document.activeElement.closest('#cards')) {
+    $('cards').innerHTML = D.cards.length ? D.cards.map((c, i) => `<tr>
+      <td><input id="n${i}" value="${esc(c.name)}" style="min-width:110px"> <div class="muted">${esc(c.uid)}</div></td>
+      <td><input id="p${i}" value="${esc(c.phone)}" inputmode="tel" style="min-width:130px"></td>
+      <td><input id="k${i}" value="${esc(c.price)}" inputmode="numeric" style="width:70px"></td>
+      <td class="${c.status==='IN'?'ok':'muted'}">${esc(c.status)}</td>
+      <td><button class="green" onclick="saveRow(${i})">Save</button></td></tr>`).join('')
+      : '<tr><td colspan="5">No cards yet - tap one on the reader</td></tr>';
+  }
+}
+refresh(); setInterval(refresh, 2000);
+</script></body></html>

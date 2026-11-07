@@ -1,0 +1,14 @@
+{
+  "business_name": "Hydra Pay",
+  "mode": "prompt",
+  "admin_pin": "1234",
+  "default_price": 1,
+  "min_topup": 1,
+  "max_topup": 10000,
+  "auto_topup_amount": 0,
+  "notify_taps": true,
+  "voice_replies": true,
+  "voice_receipts": true,
+  "admin_whatsapp": "",
+  "auto_set_webhook": true
+}

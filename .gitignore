@@ -1,0 +1,31 @@
+# Secrets / credentials
+.env
+.flask_secret
+mpesa_config.json
+Daraja_Prompt/config.json
+*.key
+
+# Live data (customer phones, payments, card records)
+rfid.db
+*.db-journal
+*.csv
+names.json
+phones.json
+debug.log
+*.log
+voice_cache/
+
+# Personal photos / shortcuts
+WhatsApp Image *.jpeg
+*.lnk
+
+# Python / tooling
+__pycache__/
+*.pyc
+.venv/
+.graphify-venv/
+graphify-out/
+.vscode/
+
+# Contains real phone numbers tied to cards
+tag_reads.md

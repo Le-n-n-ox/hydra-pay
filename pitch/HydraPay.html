@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Hydra Pay</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600;700&display=block" rel="stylesheet">
+<style>
+  @page { size: 1280px 720px; margin: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: #0e1a17; }
+  body { font-family: "IBM Plex Sans", "Segoe UI", sans-serif; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+
+  .slide { width: 1280px; height: 720px; padding: 86px 86px 0; position: relative; overflow: hidden; page-break-after: always; break-after: page; }
+  .slide:last-child { page-break-after: auto; break-after: auto; }
+  .dark  { background: #0e1a17; color: #f1f4ee; }
+  .light { background: #f2f4ee; color: #15241f; }
+  .teal  { background: #1fc28f; color: #0e1a17; }
+
+  .eyebrow { font-family: "IBM Plex Mono", monospace; font-weight: 600; letter-spacing: .14em; font-size: 18px; text-transform: uppercase; margin-bottom: 26px; }
+  .dark .eyebrow { color: #1fc28f; }
+  .light .eyebrow { color: #137a5a; }
+  .teal .eyebrow { color: #0e1a17; }
+  h1 { font-size: 46px; font-weight: 700; line-height: 1.12; letter-spacing: -.01em; margin-bottom: 32px; }
+  .footer { position: absolute; left: 86px; bottom: 50px; font-family: "IBM Plex Mono", monospace; font-size: 15px; letter-spacing: .08em; text-transform: uppercase; opacity: .55; }
+
+  .grid { display: grid; gap: 22px; }
+  .g2 { grid-template-columns: 1fr 1fr; }
+  .g3 { grid-template-columns: repeat(3, 1fr); }
+  .g4 { grid-template-columns: repeat(4, 1fr); }
+  .card { border-radius: 14px; padding: 26px 26px 24px; }
+  .dark .card  { background: #16261f; border: 1px solid #22362e; }
+  .light .card { background: #ffffff; border: 1px solid #e0e4dc; }
+  .teal .card  { background: #0e1a17; color: #f1f4ee; }
+  .big { font-size: 72px; font-weight: 700; color: #f2b13c; line-height: 1; margin-bottom: 18px; letter-spacing: -.02em; }
+  .big.word { font-size: 46px; line-height: 1.1; padding-top: 14px; margin-bottom: 20px; }
+  .card p, .card li { font-size: 20px; line-height: 1.45; }
+  .dark .card p { color: #b9c6bd; }
+  .light .card p { color: #4a5751; }
+  .num { font-family: "IBM Plex Mono", monospace; color: #137a5a; font-size: 18px; font-weight: 600; margin-bottom: 14px; }
+  .card h3 { font-size: 26px; font-weight: 600; margin-bottom: 12px; }
+  .teal .card h3 { color: #1fc28f; }
+  .label { font-family: "IBM Plex Mono", monospace; font-size: 15px; font-weight: 600; letter-spacing: .1em; text-transform: uppercase; color: #137a5a; margin-bottom: 8px; }
+  .dark .label { color: #1fc28f; }
+  .band { margin-top: 24px; border-radius: 12px; padding: 20px 28px; font-size: 21px; }
+  .dark .band  { background: #1c3a30; color: #e6ece6; }
+  .light .band { background: #16261f; color: #f1f4ee; }
+  .band b { color: #f2b13c; }
+  .dark .band b.g { color: #1fc28f; }
+  .lead { font-size: 21px; line-height: 1.5; }
+  .light .lead { color: #4a5751; }
+  .dark .lead { color: #b9c6bd; }
+  .source { font-size: 14px; opacity: .55; margin-top: 18px; }
+
+  table.rows { width: 100%; border-collapse: collapse; }
+  table.rows td { border-top: 1px solid #d6dbd2; padding: 10px 0; vertical-align: top; font-size: 19px; line-height: 1.42; }
+  table.rows tr:last-child td { border-bottom: 1px solid #d6dbd2; }
+  table.rows td:first-child { width: 250px; font-family: "IBM Plex Mono", monospace; font-weight: 600; color: #137a5a; font-size: 17px; letter-spacing: .06em; padding-top: 15px; }
+
+  table.pins { border-collapse: collapse; width: 100%; font-size: 18px; }
+  table.pins th { text-align: left; font-family: "IBM Plex Mono", monospace; font-size: 14px; letter-spacing: .1em; color: #137a5a; padding: 0 0 8px; }
+  table.pins td { padding: 6px 0; border-top: 1px solid #e3e7df; font-family: "IBM Plex Mono", monospace; }
+  .warn { color: #c0392b; font-weight: 600; }
+  ul.ticks { list-style: none; }
+  ul.ticks li { padding-left: 30px; position: relative; margin-bottom: 12px; font-size: 19px; line-height: 1.42; color: #2f3d37; }
+  ul.ticks li::before { content: ""; position: absolute; left: 2px; top: 9px; width: 12px; height: 12px; border-radius: 3px; background: #1fc28f; }
+  ul.ticks b { color: #15241f; }
+
+  .flow { display: flex; align-items: stretch; gap: 0; margin-top: 4px; }
+  .flow .card { flex: 1; }
+  .arrow { width: 38px; display: flex; align-items: center; justify-content: center; font-size: 30px; color: #1fc28f; }
+</style>
+</head>
+<body>
+
+<!-- 1. TITLE -->
+<section class="slide dark" style="display:flex;align-items:center;padding-top:0">
+  <div style="flex:1">
+    <div class="eyebrow">Tap · Pay · Record</div>
+    <div style="font-size:120px;font-weight:700;letter-spacing:-.03em;line-height:1;margin-bottom:30px">Hydra Pay</div>
+    <div style="font-size:31px;line-height:1.4;color:#b9c6bd;max-width:640px">Tap a card. Get an M-Pesa prompt.<br>Every shilling confirmed and recorded.</div>
+    <div style="font-family:'IBM Plex Mono',monospace;color:#f2b13c;font-size:19px;margin-top:34px">HYDRA-PAY · Technical University of Kenya</div>
+    <div style="font-family:'IBM Plex Mono',monospace;color:#7f8f86;font-size:16px;margin-top:10px">DTMES 2026 · Africa Electronics Innovation Challenge</div>
+  </div>
+  <!-- reader + card illustration -->
+  <svg width="400" height="400" viewBox="0 0 400 400" style="flex:none">
+    <rect x="40" y="70" width="270" height="290" rx="22" fill="#16261f" stroke="#1fc28f" stroke-width="2"/>
+    <rect x="70" y="100" width="210" height="150" rx="10" fill="#0e1a17" stroke="#22362e"/>
+    <path d="M150 175 a25 25 0 0 1 50 0" fill="none" stroke="#1fc28f" stroke-width="5" stroke-linecap="round"/>
+    <path d="M135 175 a40 40 0 0 1 80 0" fill="none" stroke="#1fc28f" stroke-width="5" stroke-linecap="round" opacity=".6"/>
+    <path d="M120 175 a55 55 0 0 1 110 0" fill="none" stroke="#1fc28f" stroke-width="5" stroke-linecap="round" opacity=".3"/>
+    <circle cx="175" cy="175" r="7" fill="#1fc28f"/>
+    <text x="175" y="225" fill="#7f8f86" font-family="IBM Plex Mono, monospace" font-size="15" text-anchor="middle">ESP32 + RC522</text>
+    <circle cx="90" cy="310" r="9" fill="#1fc28f"/>
+    <rect x="120" y="300" width="160" height="20" rx="5" fill="#22362e"/>
+    <g transform="rotate(-14 280 120)">
+      <rect x="200" y="30" width="180" height="114" rx="14" fill="#f2b13c"/>
+      <rect x="220" y="60" width="38" height="28" rx="5" fill="#0e1a17" opacity=".75"/>
+      <text x="222" y="125" fill="#0e1a17" font-family="IBM Plex Sans, sans-serif" font-weight="700" font-size="20">HYDRA PAY</text>
+    </g>
+  </svg>
+</section>
+
+<!-- 2. PROBLEM -->
+<section class="slide dark">
+  <div class="eyebrow">The problem</div>
+  <h1>Busy counters can't stop to check every payment</h1>
+  <div class="grid g4">
+    <div class="card"><div class="big">99%</div><p>of Kenyan small businesses still run partly or fully on cash</p></div>
+    <div class="card"><div class="big">86%</div><p>already accept digital payments, so they juggle both</p></div>
+    <div class="card"><div class="big word">Fake SMS</div><p>Screenshots and forwarded texts get accepted as "proof" during a rush</p></div>
+    <div class="card"><div class="big word">Paper books</div><p>Sales are written by hand, so closing the day means guessing</p></div>
+  </div>
+  <div class="band" style="margin-top:28px">Matatus, canteens and market stalls serve a queue in minutes. <b>Speed wins, and checking payments loses.</b></div>
+  <div class="source">Source: FinAccess MSE Tracker Survey, 2023.</div>
+  <div class="footer">Hydra Pay · Tap, pay, record</div>
+</section>
+
+<!-- 3. SOLUTION -->
+<section class="slide light">
+  <div class="eyebrow">The solution</div>
+  <h1>One tap starts the payment. Safaricom confirms it.</h1>
+  <div class="flow">
+    <div class="card"><div class="num">01</div><h3>Tap</h3><p>The customer taps their Hydra Pay card on the reader. The LED blinks and the tap is logged.</p></div>
+    <div class="arrow">→</div>
+    <div class="card"><div class="num">02</div><h3>Pay</h3><p>An M-Pesa prompt for the card's price pops up on the owner's phone. They enter their PIN. Nothing to type.</p></div>
+    <div class="arrow">→</div>
+    <div class="card"><div class="num">03</div><h3>Record</h3><p>Safaricom confirms. The dashboard shows <b>PAID</b> with the M-Pesa code and a WhatsApp receipt goes out.</p></div>
+  </div>
+  <div class="band"><b>Paid means paid.</b> Status comes straight from Safaricom, never from a screenshot or an SMS the customer shows you.</div>
+  <div class="footer">Hydra Pay · Tap, pay, record</div>
+</section>
+
+<!-- 4. HARDWARE -->
+<section class="slide light">
+  <div class="eyebrow">The hardware</div>
+  <h1>ESP32 + RC522: a reader from two low-cost parts</h1>
+  <div class="grid" style="grid-template-columns: 1fr 1.15fr; gap: 36px">
+    <div class="card">
+      <div class="label">RC522 → ESP32 (SPI)</div>
+      <table class="pins">
+        <tr><th>RC522</th><th>ESP32</th></tr>
+        <tr><td>SDA (SS)</td><td>GPIO 5</td></tr>
+        <tr><td>SCK</td><td>GPIO 18</td></tr>
+        <tr><td>MOSI</td><td>GPIO 23</td></tr>
+        <tr><td>MISO</td><td>GPIO 19</td></tr>
+        <tr><td>RST</td><td>GPIO 22</td></tr>
+        <tr><td>3.3V</td><td>3V3 <span class="warn">(not 5V)</span></td></tr>
+        <tr><td>GND</td><td>GND</td></tr>
+      </table>
+    </div>
+    <div>
+      <ul class="ticks">
+        <li><b>13.56 MHz RFID</b> (MIFARE cards and key tags) read over SPI at 1 MHz</li>
+        <li><b>MicroPython firmware</b> checks the RC522 firmware version at boot and retries until the wiring is good</li>
+        <li><b>Debounce:</b> holding a card on the reader counts as one tap, not ten (1.5 s window)</li>
+        <li><b>Feedback:</b> on-board LED flashes on every accepted tap</li>
+        <li><b>Powered at 3.3 V</b> because 5 V can damage the RC522</li>
+        <li>Sends <span style="font-family:'IBM Plex Mono',monospace">UID:XX XX XX XX</span> to the payment server over USB serial</li>
+      </ul>
+    </div>
+  </div>
+  <div class="footer">Hydra Pay · Hardware</div>
+</section>
+
+<!-- 5. ARCHITECTURE -->
+<section class="slide light">
+  <div class="eyebrow">How it runs</div>
+  <h1>From card tap to M-Pesa receipt</h1>
+  <table class="rows">
+    <tr><td>READER</td><td>ESP32 + RC522 reads the card UID and sends it to the Hydra Pay server.</td></tr>
+    <tr><td>PAYMENTS</td><td>Python server looks up the card owner and price, then sends an M-Pesa STK push through Safaricom's Daraja API.</td></tr>
+    <tr><td>VERIFICATION</td><td>Safaricom's callback marks the payment PAID with its M-Pesa code. If the callback is late, the server polls Daraja for up to 3 minutes.</td></tr>
+    <tr><td>RECORDS</td><td>Every tap and payment is saved in a SQLite database: card, amount, phone, status, M-Pesa code and time.</td></tr>
+    <tr><td>DASHBOARD</td><td>Live web dashboard to register cards, set prices, watch payments and export records. Admin actions need a PIN.</td></tr>
+    <tr><td>CUSTOMERS</td><td>WhatsApp receipts and a menu (my card, my payments), plus USSD for phones without internet.</td></tr>
+  </table>
+  <div class="footer">Hydra Pay · Architecture</div>
+</section>
+
+<!-- 6. RELIABILITY -->
+<section class="slide dark">
+  <div class="eyebrow">Engineering for trust</div>
+  <h1>Built so a payment is never marked wrong</h1>
+  <div class="grid g2">
+    <div class="card"><div class="label">Verified, not claimed</div><p>Only Safaricom's result can set a payment to PAID. Cancelled or unanswered prompts are recorded as NOT PAID with the reason.</p></div>
+    <div class="card"><div class="label">Two paths to the answer</div><p>Callback first, polling as backup. "Still processing" is treated as pending, not as failed.</p></div>
+    <div class="card"><div class="label">Recorded exactly once</div><p>A lock ensures each payment is finalised once, even when the callback and polling answer together.</p></div>
+    <div class="card"><div class="label">No double charging</div><p>A card can't get a second prompt while one is still waiting on the owner's phone.</p></div>
+  </div>
+  <div class="footer">Hydra Pay · Reliability</div>
+</section>
+
+<!-- 7. PROOF OF WORK -->
+<section class="slide dark">
+  <div class="eyebrow">Proof of work</div>
+  <h1>Built, wired and working end to end</h1>
+  <div class="grid g3">
+    <div class="card"><div class="big">27</div><p>M-Pesa prompts sent from real card taps during testing</p></div>
+    <div class="card"><div class="big">10</div><p>payments confirmed PAID by Safaricom, each with its M-Pesa code</p></div>
+    <div class="card"><div class="big">15</div><p>cancelled or unanswered prompts correctly recorded as NOT PAID</p></div>
+  </div>
+  <div class="grid g2" style="margin-top:22px">
+    <div class="band" style="margin:0">Two modes: <b class="g">pay per tap</b> (M-Pesa prompt) or <b class="g">prepaid wallet</b> (cash or M-Pesa top-ups)</div>
+    <div class="band" style="margin:0">Tested on Safaricom's <b class="g">Daraja sandbox</b>. Live demo at our table.</div>
+  </div>
+  <div class="footer">Hydra Pay · Proof of work</div>
+</section>
+
+<!-- 8. MARKET -->
+<section class="slide light">
+  <div class="eyebrow">Who it's for</div>
+  <h1>Small businesses where every second counts</h1>
+  <div class="grid g3">
+    <div class="card"><div class="label">Start here</div><h3>Canteens</h3><p>Lunch-hour queues, fixed prices and regular customers. A tap is faster than typing a till number.</p></div>
+    <div class="card"><div class="label">Next</div><h3>Matatus</h3><p>Tap IN when boarding, tap OUT when alighting. The conductor sees every confirmed fare.</p></div>
+    <div class="card"><div class="label">Then</div><h3>Market traders</h3><p>Mixed cash and M-Pesa, with one record of the day's sales instead of a notebook.</p></div>
+  </div>
+  <div class="band">Our first pilot: <b>canteens at the Technical University of Kenya</b>, where we can measure checkout time before and after.</div>
+  <div class="footer">Hydra Pay · Market</div>
+</section>
+
+<!-- 9. WHAT IS NEW -->
+<section class="slide teal">
+  <div class="eyebrow">What is new</div>
+  <h1 style="font-size:58px;margin-bottom:40px">Tap like a bank card.<br>Pay like M-Pesa.</h1>
+  <div class="grid g3">
+    <div class="card"><h3>No typing</h3><p>No till number, no amount, no account to enter. Tap, then PIN.</p></div>
+    <div class="card"><h3>No fake proof</h3><p>The seller never has to trust an SMS. Safaricom's answer is on the dashboard.</p></div>
+    <div class="card"><h3>Any phone</h3><p>Receipts on WhatsApp, balance and payments by USSD. No app to install.</p></div>
+  </div>
+  <div class="footer" style="opacity:.7">Hydra Pay · What is new</div>
+</section>
+
+<!-- 10. ROADMAP -->
+<section class="slide dark">
+  <div class="eyebrow">Growth</div>
+  <h1>Three steps to the street</h1>
+  <div class="grid g3">
+    <div class="card"><div class="label" style="color:#f2b13c">Now</div><h3 style="font-size:26px;margin-bottom:12px">Working prototype</h3><p>Reader, M-Pesa prompts, dashboard, WhatsApp and USSD running end to end on the Daraja sandbox.</p></div>
+    <div class="card"><div class="label" style="color:#f2b13c">Next</div><h3 style="font-size:26px;margin-bottom:12px">Campus pilot</h3><p>Live Safaricom shortcode, a cased reader on its own Wi-Fi with no laptop, and canteen trials at TU-K.</p></div>
+    <div class="card"><div class="label" style="color:#f2b13c">Then</div><h3 style="font-size:26px;margin-bottom:12px">Matatus and markets</h3><p>Battery-powered reader that queues taps when the network drops, then expand to transport and traders.</p></div>
+  </div>
+  <div class="band"><b>Revenue:</b> a small monthly fee per reader. No cut of each sale, so low-value, high-volume sellers keep their margin.</div>
+  <div class="footer">Hydra Pay · Growth</div>
+</section>
+
+<!-- 11. CLOSING -->
+<section class="slide dark" style="display:flex;flex-direction:column;justify-content:center;padding-top:0">
+  <div style="font-size:58px;font-weight:700;line-height:1.25;letter-spacing:-.01em">
+    Tap the <span style="color:#1fc28f">card.</span><br>
+    Safaricom <span style="color:#1fc28f">confirms.</span><br>
+    Every shilling <span style="color:#1fc28f">recorded.</span>
+  </div>
+  <div style="font-family:'IBM Plex Mono',monospace;color:#f2b13c;font-size:19px;margin-top:36px">Hydra Pay · HYDRA-PAY · Technical University of Kenya</div>
+</section>
+
+</body>
+</html>

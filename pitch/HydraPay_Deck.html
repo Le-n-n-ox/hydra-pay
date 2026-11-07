@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Hydra Pay · Team HYDRA-PAY · DTMES 2026</title>
+<style>
+  @page { size: 1280px 720px; margin: 0; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: "Segoe UI", "Segoe UI Variable", sans-serif; background: #0b1224; color: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  :root { --green: #22d462; --amber: #fbbf24; --blue: #4aa3ff; --card: #131f3b; --card2: #1c2a4c; --muted: #8e9bb8; --text: #d5dcea; }
+
+  .slide { width: 1280px; height: 720px; position: relative; overflow: hidden; padding: 46px 68px 0; border-top: 8px solid var(--green); page-break-after: always; break-after: page; }
+  .slide:last-child { page-break-after: auto; break-after: auto; }
+  .eyebrow { color: var(--green); font-weight: 600; font-size: 17px; letter-spacing: .02em; text-transform: uppercase; margin-bottom: 8px; }
+  h1 { font-size: 46px; font-weight: 600; line-height: 1.15; margin-bottom: 30px; }
+  .foot { position: absolute; left: 68px; right: 68px; bottom: 30px; display: flex; justify-content: space-between; font-size: 14px; color: var(--muted); }
+  .foot b { color: #fff; font-weight: 600; }
+
+  .grid { display: grid; gap: 20px; }
+  .g2 { grid-template-columns: 1fr 1fr; } .g3 { grid-template-columns: repeat(3, 1fr); } .g4 { grid-template-columns: repeat(4, 1fr); }
+  .card { background: var(--card); border-radius: 18px; padding: 24px 26px; }
+  .card h3 { font-size: 24px; font-weight: 600; margin-bottom: 10px; }
+  .card p, .card li { font-size: 18px; line-height: 1.45; color: var(--text); }
+  .bar { border-left: 6px solid var(--green); } .bar.a { border-color: var(--amber); } .bar.b { border-color: var(--blue); }
+  .band { background: var(--card2); border-radius: 14px; padding: 18px 28px; font-size: 21px; font-weight: 600; text-align: center; margin-top: 22px; }
+  .g { color: var(--green); } .a { color: var(--amber); } .b { color: var(--blue); } .m { color: var(--muted); }
+  .chip { display: inline-block; background: var(--card2); border-radius: 26px; padding: 12px 40px; font-size: 18px; font-weight: 600; margin-right: 18px; }
+  .big { font-size: 64px; font-weight: 600; line-height: 1; margin-bottom: 10px; }
+  .tag { display: inline-block; font-size: 13px; font-weight: 700; letter-spacing: .05em; padding: 3px 10px; border-radius: 10px; margin-bottom: 10px; }
+  .tag.done { background: rgba(34,212,98,.15); color: var(--green); }
+  .tag.next { background: rgba(251,191,36,.15); color: var(--amber); }
+  .tag.later { background: rgba(74,163,255,.15); color: var(--blue); }
+
+  table.t { width: 100%; border-collapse: separate; border-spacing: 0 8px; font-size: 18px; }
+  table.t th { text-align: left; font-size: 14px; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); font-weight: 600; padding: 0 20px 2px; }
+  table.t td { background: var(--card); padding: 13px 20px; line-height: 1.35; color: var(--text); vertical-align: top; }
+  table.t td:first-child { border-radius: 12px 0 0 12px; color: #fff; font-weight: 600; width: 250px; }
+  table.t td:last-child { border-radius: 0 12px 12px 0; }
+  ul.ck { list-style: none; } ul.ck li { padding-left: 28px; position: relative; margin-bottom: 8px; font-size: 18px; line-height: 1.4; color: var(--text); }
+  ul.ck li::before { content: "✓"; position: absolute; left: 0; color: var(--green); font-weight: 700; }
+  ul.ck li.todo::before { content: "→"; color: var(--amber); }
+  ul.dot { list-style: none; } ul.dot li { padding-left: 20px; position: relative; margin-bottom: 8px; }
+  ul.dot li::before { content: "•"; position: absolute; left: 2px; color: var(--green); }
+
+  .step { text-align: left; }
+  .step .n { width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 700; color: #0b1224; margin-bottom: 22px; }
+  .arrowrow { display: grid; grid-template-columns: 1fr 34px 1fr 34px 1fr 34px 1fr; align-items: center; }
+  .arr { color: var(--green); font-size: 34px; text-align: center; }
+  .box { background: var(--card); border: 2px solid var(--blue); border-radius: 16px; padding: 18px 22px; }
+  .box h4 { font-size: 21px; font-weight: 600; margin-bottom: 6px; }
+  .box p { color: var(--muted); font-size: 16px; line-height: 1.4; }
+</style>
+</head>
+<body>
+
+<!-- 1 TITLE -->
+<section class="slide" style="padding-top:120px">
+  <div class="eyebrow">DTMES 2026 · Africa Electronics Innovation Challenge · Built stage</div>
+  <div style="display:flex;justify-content:space-between">
+    <div style="max-width:760px">
+      <div style="font-size:100px;font-weight:600;line-height:1.05;margin:26px 0 22px">Hydra Pay</div>
+      <div style="font-size:33px;line-height:1.35">Fast payments. <span class="g">Safer transactions.</span> <span class="a">Clearer records.</span></div>
+      <p style="font-size:20px;line-height:1.5;color:var(--text);margin:34px 0 36px">A low-cost ESP32 + RFID payment and transaction-recording system for small businesses that serve many customers fast: matatus, canteens and market traders.</p>
+      <span class="chip b">ESP32 + RC522</span><span class="chip g">M-Pesa Daraja</span><span class="chip a">WhatsApp + USSD</span>
+    </div>
+    <div style="width:380px;text-align:center">
+      <svg width="380" height="330" viewBox="0 0 380 330">
+        <circle cx="200" cy="170" r="150" fill="#12302a"/>
+        <path d="M300 10 a110 110 0 0 1 110 110" fill="none" stroke="#fff" stroke-width="8" transform="translate(-40 0)"/>
+        <path d="M300 45 a75 75 0 0 1 75 75" fill="none" stroke="#fff" stroke-width="8" transform="translate(-40 0)"/>
+        <path d="M300 80 a40 40 0 0 1 40 40" fill="none" stroke="#fff" stroke-width="8" transform="translate(-40 0)"/>
+        <g transform="rotate(-8 180 170)">
+          <rect x="40" y="100" width="290" height="180" rx="18" fill="#22d462"/>
+          <rect x="85" y="140" width="64" height="50" rx="8" fill="#fbbf24"/>
+          <text x="85" y="245" font-family="Segoe UI" font-weight="700" font-size="26" fill="#0b1224">HYDRA PAY</text>
+        </g>
+      </svg>
+      <div style="font-size:26px;font-weight:600;margin-top:14px">Team HYDRA-PAY</div>
+      <div class="m" style="font-size:19px;margin-top:6px">Technical University of Kenya</div>
+    </div>
+  </div>
+  <div class="foot"><span><b>Hydra Pay</b> · Team HYDRA-PAY · DTMES 2026</span><span>1 / 14</span></div>
+</section>
+
+<!-- 2 PROBLEM -->
+<section class="slide">
+  <div class="eyebrow">The problem</div>
+  <h1>Busy small businesses lose time and money at the till</h1>
+  <div class="grid g3">
+    <div class="card bar a" style="min-height:300px"><h3>Cash slows everything</h3><p>Counting money and finding change at every sale builds queues. Cash leaves no record and is a target for theft.</p></div>
+    <div class="card bar b" style="min-height:300px"><h3>Mobile money disputes</h3><p>Fake confirmation SMSs, screenshots, reversals and "I've sent it" arguments. Checking each payment holds up the queue.</p></div>
+    <div class="card bar" style="min-height:300px"><h3>Records don't add up</h3><p>Sales sit in a notebook, the till and a phone inbox. At the end of the day owners can't reconcile what they earned.</p></div>
+  </div>
+  <div class="band">Owners need an affordable way to <span class="a">accept, verify and record</span> payments without slowing down.</div>
+  <div class="foot"><span><b>Hydra Pay</b> · Team HYDRA-PAY · DTMES 2026</span><span>2 / 14</span></div>
+</section>
+
+<!-- 3 EVIDENCE -->
+<section class="slide">
+  <div class="eyebrow">Market evidence</div>
+  <h1>Cash and M-Pesa live side by side</h1>
+  <div class="grid g3">
+    <div class="card" style="text-align:center"><div class="big a">99%</div><p>of surveyed small businesses run partly or wholly in cash</p></div>
+    <div class="card" style="text-align:center"><div class="big g">86%</div><p>accepted digital payments by June 2023</p></div>
+    <div class="card" style="text-align:center"><div class="big b" style="font-size:44px;padding:10px 0 4px">Cash dominant</div><p>Mobile money is everywhere, but cash is still how many businesses get paid</p></div>
+  </div>
+  <p class="m" style="font-size:14px;margin-top:12px">Sources: FinAccess MSE Tracker Survey 2023; World Bank analysis of Kenya's mobile money market.</p>
+  <div class="band" style="margin-top:26px">Hydra Pay works with the M-Pesa habits people already have. <span class="g">The opportunity is making everyday transactions easier to manage.</span></div>
+  <div class="foot"><span><b>Hydra Pay</b> · Team HYDRA-PAY · DTMES 2026</span><span>3 / 14</span></div>
+</section>
+
+<!-- 4 SOLUTION -->
+<section class="slide">
+  <div class="eyebrow">Our solution</div>
+  <h1>One tap: pay, verify and record in one flow</h1>
+  <div class="arrowrow">
+    <div class="card step" style="height:300px"><div class="n" style="background:var(--blue)">1</div><h3>Tap</h3><p>The customer taps a card, key tag or wristband on the reader at the counter or matatu door.</p></div>
+    <div class="arr">➜</div>
+    <div class="card step" style="height:300px"><div class="n" style="background:var(--green)">2</div><h3>M-Pesa prompt</h3><p>The price is sent as a Daraja STK push to the customer's phone, paid to the business till.</p></div>
+    <div class="arr">➜</div>
+    <div class="card step" style="height:300px"><div class="n" style="background:var(--amber)">3</div><h3>Verify</h3><p>The customer enters their PIN. Hydra Pay marks it PAID only when Safaricom confirms.</p></div>
+    <div class="arr">➜</div>
+    <div class="card step" style="height:300px"><div class="n" style="background:var(--green)">4</div><h3>Record</h3><p>Saved with amount, time and M-Pesa code. WhatsApp receipt sent, dashboard updated live.</p></div>
+  </div>
+  <div class="grid g2" style="margin-top:20px">
+    <div class="card" style="background:var(--card2);padding:16px 26px"><p><b class="g">Pay-per-tap:</b> every tap sends one M-Pesa prompt for the price.</p></div>
+    <div class="card" style="background:var(--card2);padding:16px 26px"><p><b class="g">Prepaid wallet:</b> regulars top up once, each tap deducts instantly.</p></div>
+  </div>
+  <div class="foot"><span><b>Hydra Pay</b> · Team HYDRA-PAY · DTMES 2026</span><span>4 / 14</span></div>
+</section>
+
+<!-- 5 OBJECTIVES -->
+<section class="slide">
+  <div class="eyebrow">Project objectives</div>
+  <h1>What we set out to build, and where we are</h1>
+  <div class="card" style="background:var(--card2);margin-bottom:20px;padding:18px 26px"><p style="font-size:19px"><b class="g">Main objective:</b> an affordable, easy-to-use payment and transaction-recording system that improves payment speed, traceability and recordkeeping for high-volume small businesses.</p></div>
+  <div class="grid g2" style="gap:14px 40px">
+    <ul class="ck">
+      <li>Design a streamlined payment workflow for fast-paced businesses <span class="g">(built)</span></li>
+      <li>Develop a reliable way to confirm completed payments <span class="g">(built)</span></li>
+      <li>Record and retrieve transaction details automatically <span class="g">(built)</span></li>
+    </ul>
+    <ul class="ck">
+      <li>Give simple daily summaries for reconciliation <span class="g">(built)</span></li>
+      <li class="todo">Reduce the time to complete and verify a transaction <span class="a">(measure in pilot)</span></li>
+      <li class="todo">Evaluate affordability, usability, reliability and security with real businesses <span class="a">(pilot)</span></li>
+    </ul>
+  </div>
+  <div class="foot"><span><b>Hydra Pay</b> · Team HYDRA-PAY · DTMES 2026</span><span>5 / 14</span></div>
+</section>
+
+<!-- 6 TECH DESIGN -->
+<section class="slide">
+  <div class="eyebrow">Technical design &amp; soundness</div>
+  <h1>How it is built</h1>
+  <div style="display:grid;grid-template-columns:250px 40px 230px 40px 230px 1fr;gap:0;align-items:center">
+    <div>
+      <div class="box"><h4>ESP32 + RC522</h4><p>13.56 MHz reader on SPI<br>3.3 V, MicroPython</p></div>
+      <div class="arr" style="font-size:30px;color:var(--blue);margin:6px 0">⬇</div>
+      <div class="box"><h4>USB serial</h4><p>"UID:XX XX XX XX"<br>115200 baud</p></div>
+    </div>
+    <div class="arr" style="color:var(--blue)">➜</div>
+    <div class="box" style="border-color:var(--green)"><h4>Python / Flask server</h4><p>Tap logic, payments, dashboard, webhooks</p></div>
+    <div class="arr" style="color:var(--muted)">⟶</div>
+    <div style="display:grid;gap:10px">
+      <div class="box" style="border:none;background:var(--card2);padding:12px 18px"><h4 class="g" style="font-size:18px">M-Pesa Daraja</h4><p>STK push + status check</p></div>
+      <div class="box" style="border:none;background:var(--card2);padding:12px 18px"><h4 class="g" style="font-size:18px">WhatsApp + Gemini AI</h4><p>receipts, bot, voice notes</p></div>
+      <div class="box" style="border:none;background:var(--card2);padding:12px 18px"><h4 class="a" style="font-size:18px">Africa's Talking USSD</h4><p>menu for any phone</p></div>
+      <div class="box" style="border:none;background:var(--card2);padding:12px 18px"><h4 class="b" style="font-size:18px">SQLite ledger</h4><p>cards, taps, payments</p></div>
+    </div>
+    <div style="padding-left:34px">
+      <div style="font-size:22px;font-weight:600;margin-bottom:12px">Engineering decisions</div>
+      <p style="font-size:16px;line-height:1.45;color:var(--text)">
+        <b class="g">Reliable reads:</b> firmware debounce, wake-up of half-read cards, 3× retry and max antenna gain (48 dB).<br>
+        <b class="g">Verified money:</b> PAID only on Safaricom's answer (callback, with status query as backup), recorded exactly once under a lock.<br>
+        <b class="g">Auditable:</b> append-only ledger; undo is a reversal entry, nothing is deleted. CSV export.<br>
+        <b class="g">Secure admin:</b> PIN for cards, cash and undo; remote login blocked while the PIN is default.<br>
+        <b class="g">Self-healing:</b> finds the USB port and reconnects if the reader is unplugged.
+      </p>
+    </div>
+  </div>
+  <div class="foot"><span><b>Hydra Pay</b> · Team HYDRA-PAY · DTMES 2026</span><span>6 / 14</span></div>
+</section>
+
+<!-- 7 PROOF OF WORK -->
+<section class="slide">
+  <div class="eyebrow">Functionality / proof of work</div>
+  <h1>It works today, and you can try it at our table</h1>
+  <div style="display:grid;grid-template-columns:620px 1fr;gap:40px">
+    <div>
+      <div class="grid g3" style="gap:14px">
+        <div class="card" style="text-align:center;padding:24px 12px"><div class="big g">27</div><p style="font-size:16px">M-Pesa prompts sent through Daraja</p></div>
+        <div class="card" style="text-align:center;padding:24px 12px"><div class="big a">10</div><p style="font-size:16px">payments confirmed PAID by Safaricom</p></div>
+        <div class="card" style="text-align:center;padding:24px 12px"><div class="big b">15</div><p style="font-size:16px">declined or unanswered, correctly NOT PAID</p></div>
+      </div>
+      <p class="m" style="font-size:15px;margin:12px 0 24px">Daraja sandbox test runs, 22–23 Oct 2026</p>
+      <div class="card" style="background:var(--card2)"><h3 class="g">Live demo</h3><p>Tap a card: watch the M-Pesa prompt arrive, the dashboard update and the WhatsApp receipt land.</p></div>
+    </div>
+    <div>
+      <div style="font-size:22px;font-weight:600;margin-bottom:14px">Working features</div>
+      <ul class="ck">
+        <li>Card and key-tag taps read and logged as IN / OUT</li>
+        <li>STK push to the card owner's phone for the card's price</li>
+        <li>WhatsApp receipt with the M-Pesa code after payment</li>
+        <li>WhatsApp bot: my card, my payments, number change</li>
+        <li>AI assistant in English, Kiswahili and Sheng, plus voice notes</li>
+        <li>Live dashboard: register cards, daily totals, CSV export</li>
+        <li>Lost card: move the account to a new card in one click</li>
+        <li>USSD menu on any phone via Africa's Talking</li>
+      </ul>
+    </div>
+  </div>
+  <div class="foot"><span><b>Hydra Pay</b> · Team HYDRA-PAY · DTMES 2026</span><span>7 / 14</span></div>
+</section>
+
+<!-- 8 TARGET MARKET -->
+<section class="slide">
+  <div class="eyebrow">Target market</div>
+  <h1>Businesses where every second counts</h1>
+  <div class="grid g3">
+    <div class="card"><span class="tag done">PILOT FIRST</span><h3>Canteens &amp; cafeterias</h3><p>Lunch-hour rush, fixed prices, regular customers.</p><p style="margin-top:10px"><b class="g">Need:</b> shorter checkout and accurate sales records.</p></div>
+    <div class="card"><span class="tag done">PILOT FIRST</span><h3>Market &amp; retail traders</h3><p>Mixed cash and M-Pesa every day.</p><p style="margin-top:10px"><b class="g">Need:</b> easy payment tracking without expensive software.</p></div>
+    <div class="card"><span class="tag next">NEXT</span><h3>Matatus &amp; transport</h3><p>Many small fares under time pressure. Tap IN to board.</p><p style="margin-top:10px"><b class="g">Need:</b> fast fare collection, confirmed fares, clear daily takings.</p></div>
+  </div>
+  <div class="band" style="font-weight:500;font-size:19px"><b>Customer:</b> the business owner or operator. <b>Users:</b> the person paying and the person receiving. We start where we can observe and measure, then move to matatus.</div>
+  <div class="foot"><span><b>Hydra Pay</b> · Team HYDRA-PAY · DTMES 2026</span><span>8 / 14</span></div>
+</section>
+
+<!-- 9 UVP + ALTERNATIVES -->
+<section class="slide">
+  <div class="eyebrow">Unique value proposition</div>
+  <h1 style="font-size:36px;margin-bottom:18px">Less friction at the till, clearer records after it, on one low-cost system</h1>
+  <table class="t">
+    <tr><th>Today</th><th>What it already does</th><th>What Hydra Pay adds</th></tr>
+    <tr><td>Cash</td><td>Familiar and immediate</td><td>No change to count, every sale recorded automatically</td></tr>
+    <tr><td>M-Pesa till / Paybill</td><td>Widely used digital payments</td><td>No typing a till number or amount: tap, then PIN. Fake SMSs don't count</td></tr>
+    <tr><td>M-Pesa Business Hub</td><td>Histories, reports, reconciliation</td><td>Tap-to-pay hardware plus a lightweight flow built for queues and fares</td></tr>
+    <tr><td>Sales notebook</td><td>Cheap recordkeeping</td><td>No manual entry; searchable records, daily totals and CSV</td></tr>
+  </table>
+  <div class="grid g4" style="margin-top:14px;gap:14px">
+    <div class="card" style="padding:14px 20px"><p><b class="g">Speed</b> for peak hours</p></div>
+    <div class="card" style="padding:14px 20px"><p><b class="a">Confidence:</b> Safaricom-verified</p></div>
+    <div class="card" style="padding:14px 20px"><p><b class="b">Automatic</b> records</p></div>
+    <div class="card" style="padding:14px 20px"><p><b class="g">Affordable</b> hardware</p></div>
+  </div>
+  <div class="foot"><span><b>Hydra Pay</b> · Team HYDRA-PAY · DTMES 2026</span><span>9 / 14</span></div>
+</section>
+
+<!-- 10 BUSINESS MODEL -->
+<section class="slide">
+  <div class="eyebrow">Business model</div>
+  <h1>Affordable for the seller, sustainable for us</h1>
+  <div class="grid g2">
+    <div class="card bar"><h3>Freemium</h3><p>Basic transaction recording free; advanced reports and features paid.</p></div>
+    <div class="card bar a"><h3>Small subscription</h3><p>An affordable weekly or monthly fee per reader.</p></div>
+    <div class="card bar b"><h3>Business packages</h3><p>Fleet and multi-stall dashboards for SACCOs and larger vendors.</p></div>
+    <div class="card bar"><h3>Partnerships</h3><p>Matatu SACCOs, market managers, canteen operators and business associations.</p></div>
+  </div>
+  <div class="band" style="font-size:19px">No cut of each sale: low-value, high-volume sellers keep their margin. <span class="a">We'll test willingness to pay in the pilot before fixing prices.</span></div>
+  <div class="foot"><span><b>Hydra Pay</b> · Team HYDRA-PAY · DTMES 2026</span><span>10 / 14</span></div>
+</section>
+
+<!-- 11 RISKS -->
+<section class="slide">
+  <div class="eyebrow">Feasibility, security &amp; risks</div>
+  <h1 style="margin-bottom:16px">Risks we've designed for</h1>
+  <table class="t" style="font-size:17px">
+    <tr><th>Challenge</th><th>How Hydra Pay handles it</th></tr>
+    <tr><td>Fake confirmations</td><td>Status comes only from Safaricom's Daraja API. An unverified payment is never shown as PAID</td></tr>
+    <tr><td>Reversals &amp; disputes</td><td>Every payment keeps its M-Pesa code, status and time in an append-only audit trail; disputes follow Safaricom's process</td></tr>
+    <tr><td>Slow checkout</td><td>Tap, then PIN. No typing. Checkout time will be measured in the pilot</td></tr>
+    <tr><td>Poor network</td><td>Pending is kept separate from paid, and "still processing" is never marked failed. Offline tap queue is next</td></tr>
+    <tr><td>Tight budgets</td><td>Off-the-shelf ESP32 + RC522, no POS terminal, no per-sale fee</td></tr>
+    <tr><td>Sensitive data</td><td>Admin PIN, keys kept out of code, minimal data stored; aligned with Kenya's Data Protection Act</td></tr>
+  </table>
+  <div class="foot"><span><b>Hydra Pay</b> · Team HYDRA-PAY · DTMES 2026</span><span>11 / 14</span></div>
+</section>
+
+<!-- 12 ROADMAP + VALIDATION -->
+<section class="slide">
+  <div class="eyebrow">Roadmap &amp; validation</div>
+  <h1 style="margin-bottom:22px">From working prototype to real businesses</h1>
+  <div class="grid" style="grid-template-columns:repeat(5,1fr);gap:14px">
+    <div class="card" style="padding:20px"><span class="tag done">DONE</span><h3 style="font-size:20px">Prototype</h3><p style="font-size:16px">Reader, M-Pesa, verification, records, WhatsApp, USSD on the Daraja sandbox.</p></div>
+    <div class="card" style="padding:20px"><span class="tag next">NEXT</span><h3 style="font-size:20px">Discovery</h3><p style="font-size:16px">10–20 interviews with vendors and conductors about payments, disputes and records.</p></div>
+    <div class="card" style="padding:20px"><span class="tag next">NEXT</span><h3 style="font-size:20px">Go live</h3><p style="font-size:16px">Live Safaricom till, live USSD short code, offline reader that syncs later.</p></div>
+    <div class="card" style="padding:20px"><span class="tag next">PILOT</span><h3 style="font-size:20px">Controlled pilot</h3><p style="font-size:16px">A few canteens and traders, measured against a before baseline.</p></div>
+    <div class="card" style="padding:20px"><span class="tag later">LATER</span><h3 style="font-size:20px">Expand</h3><p style="font-size:16px">Matatu SACCOs, then multi-currency. The owner always gets KES.</p></div>
+  </div>
+  <div class="card" style="background:var(--card2);margin-top:18px;padding:18px 26px">
+    <p style="font-size:17px"><b class="g">We'll measure:</b> transaction time · queue time at peak · % of transactions recorded correctly · verification success rate · reconciliation errors · merchant satisfaction and willingness to pay. <span class="m">Targets are set after the baseline.</span></p>
+  </div>
+  <div class="foot"><span><b>Hydra Pay</b> · Team HYDRA-PAY · DTMES 2026</span><span>12 / 14</span></div>
+</section>
+
+<!-- 13 INDUSTRY -->
+<section class="slide">
+  <div class="eyebrow">Industry engagement</div>
+  <h1>Meeting Safaricom leadership</h1>
+  <div style="display:grid;grid-template-columns:810px 1fr;gap:28px">
+    <div><div style="height:420px;overflow:hidden;border:3px solid var(--card2)"><img src="../WhatsApp Image 2026-10-23 at 14.01.09.jpeg" style="width:100%;height:100%;object-fit:cover"></div><p class="m" style="text-align:center;font-size:18px;margin-top:10px">With Safaricom's former Chief Financial Services Officer</p></div>
+    <div><div style="height:420px;overflow:hidden;border:3px solid var(--card2)"><img src="../WhatsApp Image 2026-10-23 at 14.01.08.jpeg" style="width:100%;height:100%;object-fit:cover;object-position:center 20%"></div><p class="m" style="text-align:center;font-size:18px;margin-top:10px">With Safaricom's Chief Technology &amp; Information Officer</p></div>
+  </div>
+  <div class="foot"><span><b>Hydra Pay</b> · Team HYDRA-PAY · DTMES 2026</span><span>13 / 14</span></div>
+</section>
+
+<!-- 14 CLOSING -->
+<section class="slide" style="display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding-top:0">
+  <div style="font-size:110px;font-weight:600;line-height:1">Tap. <span class="g">Pay.</span> Done.</div>
+  <p style="font-size:27px;color:var(--text);margin:30px 0 44px">Hydra Pay: fast payments, safer transactions, clearer records.</p>
+  <div style="background:var(--green);color:#0b1224;font-size:25px;font-weight:600;padding:22px 42px;border-radius:44px">Questions? Try the live demo</div>
+  <p class="m" style="font-size:21px;margin-top:40px">Team HYDRA-PAY · Technical University of Kenya · DTMES 2026</p>
+  <div class="foot"><span><b>Hydra Pay</b> · Team HYDRA-PAY · DTMES 2026</span><span>14 / 14</span></div>
+</section>
+
+</body>
+</html>
