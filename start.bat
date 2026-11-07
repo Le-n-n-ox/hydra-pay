@@ -1,6 +1,8 @@
 @echo off
 title RFID Pay Launcher
 cd /d "%~dp0"
+set TELCO_TOKEN=
+if exist ".env" for /f "tokens=1,2 delims==" %%A in (.env) do if /I "%%A"=="TELCO_CALLBACK_TOKEN" set TELCO_TOKEN=%%B
 
 echo ==========================================
 echo   RFID PAY - Card + M-Pesa + WhatsApp
@@ -74,6 +76,13 @@ if "%NGROK_URL%"=="" (
     echo.
     echo    %NGROK_URL%/webhook
     echo.
+    if not "%TELCO_TOKEN%"=="" (
+        echo  SMS / USSD callbacks ^(paste in your provider portal^):
+        echo    %NGROK_URL%/ussd/%TELCO_TOKEN%
+        echo    %NGROK_URL%/sms/delivery/%TELCO_TOKEN%
+        echo    %NGROK_URL%/sms/inbound/%TELCO_TOKEN%
+        echo.
+    )
     echo ==========================================
     echo %NGROK_URL%/webhook| clip
     echo (Already copied to your clipboard)

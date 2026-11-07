@@ -39,10 +39,11 @@ Payments show live on a dashboard, and receipts go out on WhatsApp.
 | `wallet.py` | What happens on a swipe, M-Pesa payments, receipts |
 | `mpesa.py` | Daraja STK push + status checks |
 | `bot.py` / `whatsapp.py` | WhatsApp menu, AI chat, voice notes |
+| `sms.py` / `telco/` | SMS receipts and provider-neutral SMS/USSD adapters |
 | `store.py` | The SQLite database `rfid.db` |
 | `settings.json` | Admin PIN, default price, business name, `"mode": "prompt"` (or `"wallet"`) |
 | `mpesa_config.json` | Daraja keys |
-| `.env` | UltraMsg / Gemini / ElevenLabs keys (keep private) |
+| `.env` | UltraMsg / Gemini / ElevenLabs / telco keys (keep private; see `.env.example`) |
 | `micropython/` | Code running on the ESP32 |
 
 ## WhatsApp menu

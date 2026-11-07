@@ -12,6 +12,7 @@ Usage:  python dashboard.py          (auto-detects the ESP32 port)
 """
 import secrets
 import os
+import re
 import socket
 import sys
 import threading
@@ -464,6 +465,19 @@ def connect_telco():
     print(f"SMS inbound: {base}/sms/inbound/{token}")
 
 
+def daily_sms_summary_loop():
+    """Optional once-a-day admin summary; disabled until a HH:MM time is set."""
+    sent_day = ""
+    while True:
+        setting = str(wallet.settings().get("admin_daily_summary_time", "")).strip()
+        current = datetime.now()
+        if re.fullmatch(r"\d{2}:\d{2}", setting) and current.strftime("%H:%M") == setting and sent_day != current.strftime("%Y-%m-%d"):
+            summary = store.daily_summary(sent_day or current.strftime("%Y-%m-%d"))
+            sms.send_admin(f"Hydra Pay daily: M-Pesa KSh {summary['mpesa']}, taps {summary['taps']}, denied {summary['denied']}.", "daily_summary")
+            sent_day = current.strftime("%Y-%m-%d")
+        time.sleep(20)
+
+
 if __name__ == "__main__":
     import logging
     logging.getLogger("werkzeug").setLevel(logging.ERROR)   # hide the per-request log lines
@@ -471,6 +485,7 @@ if __name__ == "__main__":
     threading.Thread(target=serial_loop, daemon=True).start()
     threading.Thread(target=connect_whatsapp, daemon=True).start()
     threading.Thread(target=connect_telco, daemon=True).start()
+    threading.Thread(target=daily_sms_summary_loop, daemon=True).start()
     threading.Thread(target=wallet.recheck_stuck, daemon=True).start()
     print(f"Dashboard: http://localhost:{HTTP_PORT}   phone on same WiFi: http://{lan_ip()}:{HTTP_PORT}")
     if "--no-browser" not in sys.argv:

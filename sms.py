@@ -94,6 +94,8 @@ def inbound(req):
 def send_admin(text, kind="admin"):
     try:
         import wallet
+        if not wallet.settings().get("sms_admin_alerts", True):
+            return None
         phone = store.to_254(wallet.settings().get("admin_phone", ""))
     except Exception:
         phone = ""

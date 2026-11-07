@@ -29,7 +29,7 @@
  .tile:nth-child(2){animation-delay:.08s}.tile:nth-child(3){animation-delay:.16s}.tile:nth-child(4){animation-delay:.24s}
  .tile:hover{transform:translateY(-4px);box-shadow:0 14px 34px rgba(0,0,0,.35)}
  .tile::before{content:"";position:absolute;inset:0 0 auto 0;height:3px;background:var(--g)}
- .tile .ic{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;background:var(--g);font-size:18px;margin-bottom:12px}
+ .tile .ic{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;background:var(--g);margin-bottom:12px}
  .tile span{color:var(--mut);font-size:13px}
  .tile b{display:block;font-size:30px;margin-top:2px;letter-spacing:-.5px;font-variant-numeric:tabular-nums}
  .box{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:18px;margin-bottom:20px;overflow-x:auto;backdrop-filter:blur(14px);animation:fadeUp .6s .2s both}
@@ -57,7 +57,7 @@
  .form{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;align-items:end;margin-top:16px;padding:16px;border-radius:14px;background:rgba(0,0,0,.2);border:1px dashed var(--line);animation:fadeUp .35s both}
  .form label{font-size:12px;color:var(--mut);display:block;margin-bottom:5px}
  .banner{display:flex;align-items:center;gap:14px;flex-wrap:wrap;background:linear-gradient(135deg,rgba(245,158,11,.18),rgba(139,92,246,.18));border:1px solid rgba(245,158,11,.5);border-radius:16px;padding:16px;margin-bottom:20px;animation:slideIn .5s both}
- .ring{width:42px;height:42px;border-radius:50%;background:var(--amber);display:grid;place-items:center;font-size:20px;position:relative;flex:none}
+ .ring{width:42px;height:42px;border-radius:50%;background:var(--amber);display:grid;place-items:center;position:relative;flex:none}
  .ring::after{content:"";position:absolute;inset:0;border-radius:50%;border:2px solid var(--amber);animation:ping 1.4s infinite}
  @keyframes slideIn{from{opacity:0;transform:translateY(-16px) scale(.98)}}
  @keyframes fadeUp{from{opacity:0;transform:translateY(14px)}}
@@ -66,22 +66,30 @@
  .toast{position:fixed;bottom:24px;left:50%;transform:translate(-50%,30px);padding:13px 20px;border-radius:12px;opacity:0;pointer-events:none;max-width:90%;font-weight:600;
    box-shadow:0 12px 34px rgba(0,0,0,.45);transition:.35s;z-index:9}
  .toast.show{opacity:1;transform:translate(-50%,0)}
+ .ico{vertical-align:-.18em;margin-right:6px}.ico-only{vertical-align:middle}.toast .ico{margin-right:8px}
+ button svg{vertical-align:-.18em;margin-right:6px}
  @media(max-width:600px){body{padding:14px}h1{font-size:22px}.tile b{font-size:26px}}
 </style></head><body>
 <div id="root"></div>
 
 <script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js"></script>
 <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js"></script>
+<script>window.react = window.React;</script>
+<script src="https://unpkg.com/lucide-react@0.472.0/dist/umd/lucide-react.min.js"></script>
 <script src="https://unpkg.com/@babel/standalone@7.26.4/babel.min.js"></script>
 
 <script type="text/babel">
 const { useState, useEffect, useRef } = React;
+const { CreditCard, Wallet, CheckCircle, XCircle, Users, AlertTriangle, PlusCircle,
+  Smartphone, Download, Save, Inbox, Plus, Globe, Clock } = LucideReact;
 
 const today = () => new Date(Date.now() - new Date().getTimezoneOffset()*60000).toISOString().slice(0,10);
 const avColor = n => `hsl(${[...String(n)].reduce((a,c)=>a+c.charCodeAt(0)*7,0)%360},65%,48%)`;
 const payCls = s => s === 'PAID' ? 'ok' : /^(FAILED|NOT PAID)/.test(s) ? 'bad' : 'wait';
-const payText = s => s === 'PAID' ? '✅ Paid' : s.startsWith('Prompt sent') ? '⏳ Waiting for PIN' : s.startsWith('Sending') ? '⏳ Sending...'
-  : s.replace(/^NOT PAID: /, '❌ ').replace(/^FAILED: /, '⚠️ ');
+const payText = s => s === 'PAID' ? 'Paid' : s.startsWith('Prompt sent') ? 'Waiting for PIN' : s.startsWith('Sending') ? 'Sending...'
+  : s.replace(/^NOT PAID: /, '').replace(/^FAILED: /, 'Failed: ');
+const PaymentStatusIcon = ({ status }) => status === 'PAID' ? <CheckCircle className="ico" size={14} />
+  : /^(FAILED|NOT PAID)/.test(status) ? <XCircle className="ico" size={14} /> : <Clock className="ico" size={14} />;
 
 function usePolling(ms) {
   const [data, setData] = useState(null);
@@ -129,13 +137,13 @@ function Chip({ on, off, children }) {
   return <span className="chip"><span className={'dot ' + (off ? 'off' : on ? 'on' : '')}></span>{children}</span>;
 }
 
-function StatTile({ icon, label, grad, children }) {
-  return <div className="tile" style={{ '--g': grad }}><div className="ic">{icon}</div><span>{label}</span><b>{children}</b></div>;
+function StatTile({ Icon, label, grad, children }) {
+  return <div className="tile" style={{ '--g': grad }}><div className="ic"><Icon size={20} aria-hidden="true" /></div><span>{label}</span><b>{children}</b></div>;
 }
 
 function Toast({ t }) {
   return <div className={'toast' + (t ? ' show' : '')}
-    style={{ background: t && t.bad ? '#991b1b' : '#065f46' }}>{t ? (t.bad ? '⚠️ ' : '✅ ') + t.msg : ''}</div>;
+    style={{ background: t && t.bad ? '#991b1b' : '#065f46' }}>{t && <>{t.bad ? <AlertTriangle className="ico" size={18} /> : <CheckCircle className="ico" size={18} />}{t.msg}</>}</div>;
 }
 
 function NewCardBanner({ uid, cards, onRegister, onMove }) {
@@ -143,7 +151,7 @@ function NewCardBanner({ uid, cards, onRegister, onMove }) {
   const sel = cards.some(c => c.uid === mv) ? mv : (cards[0] && cards[0].uid);
   return (
     <div className="banner">
-      <div className="ring">🆕</div>
+      <div className="ring"><PlusCircle size={21} aria-label="New card" /></div>
       <div>New card tapped<br /><code>{uid}</code></div>
       <button className="green" onClick={() => onRegister(uid)}>Register it</button>
       {cards.length > 0 && <>
@@ -160,8 +168,8 @@ function NewCardBanner({ uid, cards, onRegister, onMove }) {
 function PaymentsTable({ payments, fresh }) {
   return (
     <div className="box">
-      <h3>📲 M-Pesa payments
-        <button className="gray" onClick={() => location.href = '/api/export?what=payments&date=' + today()}>⬇ Download today (Excel)</button>
+      <h3><Smartphone className="ico" size={18} />M-Pesa payments
+        <button className="gray" onClick={() => location.href = '/api/export?what=payments&date=' + today()}><Download size={15} />Download today (Excel)</button>
       </h3>
       <table>
         <thead><tr><th>Time</th><th>Name</th><th>Phone</th><th>KSh</th><th>Status</th><th>M-Pesa code</th></tr></thead>
@@ -174,10 +182,10 @@ function PaymentsTable({ payments, fresh }) {
                 <td><Avatar name={p.name} /><b>{p.name}</b></td>
                 <td>{p.phone}</td>
                 <td><b>{p.amount}</b></td>
-                <td><span className={'pill ' + payCls(p.status)}>{payText(p.status)}</span></td>
+                <td><span className={'pill ' + payCls(p.status)}><PaymentStatusIcon status={p.status} />{payText(p.status)}</span></td>
                 <td><code>{p.mpesa_receipt || ''}</code></td>
               </tr>);
-          }) : <tr><td colSpan="6" className="empty">📭 No payments yet - swipe a card</td></tr>}
+          }) : <tr><td colSpan="6" className="empty"><Inbox className="ico" size={17} />No payments yet - swipe a card</td></tr>}
         </tbody>
       </table>
     </div>
@@ -197,9 +205,9 @@ function CardsTable({ cards, drafts, setDraft, onSave, onBlock }) {
             <td><input value={val(c, 'phone')} inputMode="tel" onChange={e => setDraft(c.uid, 'phone', e.target.value)} style={{ minWidth: 130 }} /></td>
             <td><input value={val(c, 'price')} inputMode="numeric" onChange={e => setDraft(c.uid, 'price', e.target.value)} style={{ width: 80 }} /></td>
             <td><span className={'pill ' + (c.blocked ? 'bad' : c.status === 'IN' ? 'ok' : 'idle')}>{c.blocked ? 'BLOCKED' : c.status}</span></td>
-            <td><button className="green" onClick={() => onSave(c)}>💾 Save</button> <button className="gray" onClick={() => onBlock(c)}>{c.blocked ? 'Unblock' : 'Block'}</button></td>
+            <td><button className="green" onClick={() => onSave(c)}><Save size={15} />Save</button> <button className="gray" onClick={() => onBlock(c)}>{c.blocked ? 'Unblock' : 'Block'}</button></td>
           </tr>
-        )) : <tr><td colSpan="5" className="empty">🪪 No cards yet - tap one on the reader</td></tr>}
+        )) : <tr><td colSpan="5" className="empty"><CreditCard className="ico" size={17} />No cards yet - tap one on the reader</td></tr>}
       </tbody>
     </table>
   );
@@ -223,6 +231,8 @@ function TelcoPanel({ telco, post, say }) {
     <div className="form"><div><label>USSD simulator phone</label><input value={simPhone} onChange={e=>setSimPhone(e.target.value)} placeholder="0712 345 678" /></div><div><label>Full input (e.g. 1*1234)</label><input value={simText} onChange={e=>setSimText(e.target.value)} placeholder="Leave blank to start" /></div><div><button className="gray" onClick={simulate}>Run simulator</button></div></div>
     {out && <pre className="muted" style={{whiteSpace:'pre-wrap'}}>{out}</pre>}
     <div className="form"><div><label>USSD code</label><input value={code} onChange={e=>setCode(e.target.value)} placeholder="*XXX*YY#" /></div><div><label>Admin SMS phone</label><input value={admin} onChange={e=>setAdmin(e.target.value)} placeholder="0712 345 678" /></div><div><label><input type="checkbox" checked={receipts} onChange={e=>setReceipts(e.target.checked)} style={{width:'auto',marginRight:8}} />SMS receipts</label></div><div><button className="gray" onClick={save}>Save settings</button></div></div>
+    <h3 style={{marginTop:18}}>Recent SMS</h3><table><thead><tr><th>Time</th><th>Phone</th><th>Kind</th><th>Status</th></tr></thead><tbody>{telco?.sms?.length ? telco.sms.slice(0,5).map(m=><tr key={m.id}><td>{m.time}</td><td>{m.phone}</td><td>{m.kind}</td><td>{m.status}</td></tr>) : <tr><td colSpan="4" className="empty">No SMS activity</td></tr>}</tbody></table>
+    <h3 style={{marginTop:18}}>Recent USSD sessions</h3><table><thead><tr><th>Phone</th><th>Code</th><th>Last seen</th><th>State</th></tr></thead><tbody>{telco?.sessions?.length ? telco.sessions.slice(0,5).map(s=><tr key={s.session_id}><td>{s.phone}</td><td>{s.service_code}</td><td>{s.last_seen}</td><td>{s.last_screen}</td></tr>) : <tr><td colSpan="4" className="empty">No USSD activity</td></tr>}</tbody></table>
   </div>;
 }
 
@@ -303,23 +313,23 @@ function App() {
         <NewCardBanner key={D.new_card} uid={D.new_card} cards={D.cards} onRegister={uid => openForm({ uid })} onMove={moveCard} />}
 
       <div className="tiles">
-        <StatTile icon="💰" label="Collected today" grad="linear-gradient(135deg,#10b981,#059669)"><CountUp to={Number(s.mpesa) || 0} prefix="KSh " /></StatTile>
-        <StatTile icon="✅" label="Paid swipes" grad="linear-gradient(135deg,#4f8cff,#3b6fe0)"><CountUp to={paid} /></StatTile>
-        <StatTile icon="🚫" label="Didn't pay" grad="linear-gradient(135deg,#ef4444,#b91c1c)"><CountUp to={Number(s.swipe_unpaid) || 0} /></StatTile>
-        <StatTile icon="👥" label="Inside now" grad="linear-gradient(135deg,#8b5cf6,#6d28d9)"><CountUp to={D.inside.length} /></StatTile>
+        <StatTile Icon={Wallet} label="Collected today" grad="linear-gradient(135deg,#10b981,#059669)"><CountUp to={Number(s.mpesa) || 0} prefix="KSh " /></StatTile>
+        <StatTile Icon={CheckCircle} label="Paid swipes" grad="linear-gradient(135deg,#4f8cff,#3b6fe0)"><CountUp to={paid} /></StatTile>
+        <StatTile Icon={XCircle} label="Didn't pay" grad="linear-gradient(135deg,#ef4444,#b91c1c)"><CountUp to={Number(s.swipe_unpaid) || 0} /></StatTile>
+        <StatTile Icon={Users} label="Inside now" grad="linear-gradient(135deg,#8b5cf6,#6d28d9)"><CountUp to={D.inside.length} /></StatTile>
       </div>
 
       <PaymentsTable payments={D.payments} fresh={fresh} />
 
       <div className="box">
-        <h3>🪪 Cards <button className="green" onClick={() => openForm()}>＋ Add card</button></h3>
+        <h3><CreditCard className="ico" size={18} />Cards <button className="green" onClick={() => openForm()}><Plus size={15} />Add card</button></h3>
         <div className="muted" style={{ marginBottom: 10 }}>Change a name, phone or price right in the table, then press Save. Card owners can also change their own number on WhatsApp (send <b>3</b>, or just the new number). Lost card? Tap the new one and use <b>Move to this card</b>.</div>
         <CardsTable cards={D.cards} drafts={drafts} setDraft={setDraft} onSave={saveRow} onBlock={blockCard} />
         {form && <CardForm form={form} setForm={setForm} onSave={saveForm} onCancel={() => setForm(null)} />}
       </div>
 
       <TelcoPanel telco={telco} post={post} say={say} />
-      <div id="links" className="muted">📱 Open on your phone (same WiFi): {D.lan_url}{D.public_url ? <> &nbsp;·&nbsp; 🌍 {D.public_url}</> : null}</div>
+      <div id="links" className="muted"><Smartphone className="ico" size={15} />Open on your phone (same WiFi): {D.lan_url}{D.public_url ? <> &nbsp;·&nbsp; <Globe className="ico" size={15} />{D.public_url}</> : null}</div>
       <Toast t={toast} />
     </div>
   );

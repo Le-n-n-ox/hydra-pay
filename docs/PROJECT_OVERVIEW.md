@@ -15,6 +15,8 @@ RFID card
       -> Browser dashboard: static/index.html
       -> M-Pesa Daraja STK push
       -> UltraMsg WhatsApp API
+      -> Switchable SMS provider (ThriveVAS / Africa's Talking)
+      -> Switchable USSD provider (ThriveVAS mapper / Africa's Talking)
       -> Gemini / ElevenLabs (optional)
       -> Africa's Talking USSD callback (optional)
 ```
@@ -30,8 +32,9 @@ RFID card
 | `wallet.py` | Tap behaviour, M-Pesa top-ups/payments, cash top-ups, reversals, receipts, and notifications. |
 | `mpesa.py` | Safaricom Daraja authentication, STK Push, status query, and payment polling. |
 | `whatsapp.py` | UltraMsg messages/webhook configuration, Gemini calls and transcription, ElevenLabs synthesis. |
+| `sms.py` / `telco/` | Transactional SMS queue, delivery/inbound handling, and switchable ThriveVAS/Africa's Talking adapters. |
 | `bot.py` | WhatsApp menu, card/payment lookup, phone-number change, AI conversation, and voice-note handling. |
-| `ussd.py` | Africa's Talking USSD menu for card details, payment history, and M-Pesa top-up. |
+| `ussd.py` | Provider-neutral USSD state machine for PIN-protected cards, statements, M-Pesa, blocking, and language choice. |
 | `micropython/` | Firmware currently intended for the ESP32; emits RFID UID lines to USB serial. |
 | `RFID_ESP32/` | Arduino firmware alternative; it is not the default firmware described by the code comments. |
 

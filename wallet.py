@@ -21,7 +21,8 @@ def settings():
 def update_settings(values):
     """Persist only dashboard-safe settings; provider secrets stay in .env."""
     allowed = {"ussd_code", "ussd_language_default", "ussd_pin_required", "ussd_max_prompts_per_hour",
-               "sms_receipts", "sms_when_whatsapp_fails", "sms_low_balance", "sms_admin_alerts", "admin_phone"}
+               "sms_receipts", "sms_when_whatsapp_fails", "sms_low_balance", "sms_admin_alerts", "admin_phone",
+               "admin_daily_summary_time"}
     current = settings()
     for key, value in values.items():
         if key in allowed:

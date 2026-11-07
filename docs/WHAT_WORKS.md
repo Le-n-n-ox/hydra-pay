@@ -29,6 +29,7 @@
 | Gemini assistant and transcription | Builds a constrained, card-aware AI response and can transcribe incoming voice media. | Valid Gemini API key and network access. |
 | ElevenLabs voice messages | Creates a voice receipt and can reply to WhatsApp voice messages. | Valid ElevenLabs key; UltraMsg needs access to the audio or accepts base64 audio. |
 | USSD menu | Returns Africa's Talking `CON`/`END` responses for card information, recent payments, and M-Pesa top-up. | Africa's Talking service code configured to POST to public `/ussd`. |
+| Provider-neutral SMS/USSD | Switches ThriveVAS, Africa's Talking, or disabled (`none`) independently through `.env`; callbacks require a shared token. | Valid provider credentials, callback registration, and a public HTTPS URL. |
 
 ## Existing safeguards
 

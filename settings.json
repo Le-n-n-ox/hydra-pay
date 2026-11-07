@@ -18,6 +18,7 @@
   "sms_low_balance": true,
   "sms_admin_alerts": true,
   "admin_phone": "",
+  "admin_daily_summary_time": "",
   "admin_whatsapp": "",
   "auto_set_webhook": true
 }

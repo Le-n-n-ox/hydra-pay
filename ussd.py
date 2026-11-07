@@ -212,6 +212,8 @@ def handle(request):
     saved = store.get_ussd_session(request.session_id)
     try: state = json.loads(saved.get("steps") or "{}") if saved else _root(request.phone)
     except (TypeError, ValueError): state = _root(request.phone)
+    if not saved and state.get("screen") == "unregistered" and not store.ussd_sessions_today(request.phone):
+        sms.send_admin(f"Hydra Pay: unregistered USSD caller {request.phone}.", "unregistered_ussd")
     incoming, old = [s for s in (request.text or "").split("*") if s != ""], state.get("history", [])
     if incoming[:len(old)] == old: new = incoming[len(old):]
     else: state, new = _root(request.phone), incoming

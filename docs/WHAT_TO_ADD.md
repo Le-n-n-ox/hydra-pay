@@ -13,12 +13,12 @@
 
 | Priority | Work to add | Why it matters |
 | --- | --- | --- |
-| High | Authenticate and verify M-Pesa, UltraMsg, and Africa's Talking callbacks. | `/mpesa/callback`, `/webhook`, and `/ussd` currently accept requests without a provider signature/secret check. A public URL should not trust arbitrary callers. |
+| High | Authenticate and verify M-Pesa and UltraMsg callbacks. | The new SMS/USSD callbacks require `TELCO_CALLBACK_TOKEN`; the older `/mpesa/callback` and `/webhook` routes still need provider-specific verification before a public production deployment. |
 | High | Put the dashboard behind HTTPS and explicit user authentication for every non-local deployment. | The Flask development server is started directly and loopback is trusted; it is not a hardened production web server. |
 | High | Add rate limiting, request-size limits, and audit logging for public routes and admin actions. | Reduces abuse and makes support/investigation possible. |
 | High | Create encrypted backups and a retention policy for `rfid.db`. | The database includes phone numbers, card associations, payment activity, and balances. |
 | Medium | Add proper user roles (administrator, attendant, viewer) instead of one shared PIN. | Supports accountability and least-privilege access. |
-| Medium | Add automated tests for database updates, tap state changes, payment state transitions, callback idempotency, and API permissions. | The project currently has no test suite. |
+| Medium | Expand automated coverage for database updates, tap state changes, payment state transitions, and callback idempotency. | The SMS/USSD regression suite exists, but core payment and reader edge cases still need coverage. |
 | Medium | Add structured logs, health checks, monitoring, and restart supervision. | Makes serial/device/API failures observable and recoverable. |
 | Medium | Pin dependencies in `requirements.txt` or a lock file and add a repeatable deployment script. | Prevents different installations from silently receiving incompatible package versions. |
 | Medium | Run with a production WSGI server and service manager. | Flask's built-in server is intended for development, not resilient production hosting. |
