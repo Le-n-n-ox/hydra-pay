@@ -111,8 +111,11 @@ export function Overview({ data: d }: { data: DashboardData }) {
                       <p className="truncate text-sm font-medium">{f.name}</p>
                       <p className="truncate text-xs text-muted-foreground">{f.text}</p>
                     </div>
-                    {f.status ? <PaymentBadge status={f.status} /> : <Pill tone={f.tone}>{f.kind === 'tap' ? <Activity className="size-3" /> : null}{names.has(f.uid) ? f.dir : 'New'}</Pill>}
-                    <span className="shrink-0 whitespace-nowrap text-right text-xs tabular-nums text-muted-foreground">{f.time.startsWith(day) ? hhmm(f.time) : shortTime(f.time)}</span>
+                    {/* status above the time on phones, side by side from sm up */}
+                    <div className="flex min-w-0 max-w-[55%] shrink-0 flex-col items-end gap-1 sm:max-w-none sm:flex-row sm:items-center sm:gap-3">
+                      {f.status ? <PaymentBadge status={f.status} className="max-w-full sm:max-w-[16rem]" /> : <Pill tone={f.tone}>{f.kind === 'tap' ? <Activity className="size-3" /> : null}{names.has(f.uid) ? f.dir : 'New'}</Pill>}
+                      <span className="whitespace-nowrap text-right text-xs tabular-nums text-muted-foreground">{f.time.startsWith(day) ? hhmm(f.time) : shortTime(f.time)}</span>
+                    </div>
                   </motion.li>
                 ))}
               </AnimatePresence>
