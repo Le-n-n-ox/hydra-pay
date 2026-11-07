@@ -150,7 +150,7 @@ def require_login():
         return ("", 404)
     # "/" is the public landing page; /assets/ and /favicon.svg are static build files (no data).
     open_paths = ("/login", "/webhook", "/voice/", "/mpesa/callback", "/ussd/", "/sms/", "/bridge/",
-                  "/welcome", "/assets/", "/favicon.svg")
+                  "/welcome", "/assets/", "/favicon.svg", "/pitch.pdf")
     public_pages = ("/",)   # exact matches (every path starts with "/", so it can't be a prefix)
     if not logged_in() and request.path not in public_pages and not request.path.startswith(open_paths):
         if request.path.startswith("/api/"):
@@ -189,6 +189,12 @@ def assets(name):
 @app.route("/favicon.svg")
 def favicon():
     return send_from_directory(HERE / "static", "favicon.svg")
+
+
+@app.route("/pitch.pdf")
+def pitch_pdf():
+    """Public pitch deck (also linked from the competition form)."""
+    return send_from_directory(HERE / "static", "pitch.pdf", mimetype="application/pdf")
 
 
 @app.route("/welcome")

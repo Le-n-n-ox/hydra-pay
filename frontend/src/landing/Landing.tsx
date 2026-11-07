@@ -1,11 +1,13 @@
-import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { AnimatePresence, motion, useInView, useReducedMotion, useScroll, useSpring, useTransform } from 'motion/react'
 import { ArrowRight, Check, ChevronDown, LayoutDashboard, Menu, Minus, Play, ShieldCheck, X } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { AnimatedNumber, Background } from '@/components/shared'
 import { ModeToggle, ThemePicker } from '@/components/ThemeSwitcher'
+import { Reveal, Section } from '@/landing/blocks'
 import { DemoSim } from '@/landing/DemoSim'
+import { Faq, Features, GetStarted, Journey, SystemParts, WhatIf } from '@/landing/Explainer'
 import { HeroGraphic } from '@/landing/HeroGraphic'
 import * as C from '@/landing/content'
 import { cn } from '@/lib/utils'
@@ -13,32 +15,13 @@ import { cn } from '@/lib/utils'
 const NAV = [
   ['who', "Who it's for"],
   ['how', 'How it works'],
+  ['features', 'Features'],
   ['demo', 'Try it'],
   ['compare', 'Why Hydra Pay'],
+  ['faq', 'FAQ'],
 ] as const
 
 /* ---------- small building blocks ---------- */
-
-function Section({ id, eyebrow, title, intro, children, className }: { id?: string; eyebrow: string; title: ReactNode; intro?: ReactNode; children: ReactNode; className?: string }) {
-  return (
-    <section id={id} className={cn('relative mx-auto max-w-6xl scroll-mt-24 px-5 py-14 sm:py-20', className)}>
-      <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: '-80px' }} transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }} className="mx-auto mb-10 max-w-2xl text-center">
-        <p className="mb-3 text-sm font-semibold uppercase tracking-[0.2em] text-brand-text">{eyebrow}</p>
-        <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">{title}</h2>
-        {intro && <p className="mt-4 text-lg text-muted-foreground">{intro}</p>}
-      </motion.div>
-      {children}
-    </section>
-  )
-}
-
-function Reveal({ children, delay = 0, className }: { children: ReactNode; delay?: number; className?: string }) {
-  return (
-    <motion.div initial={{ opacity: 0, y: 24 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: '-60px' }} transition={{ delay, type: 'spring', stiffness: 200, damping: 24 }} className={className}>
-      {children}
-    </motion.div>
-  )
-}
 
 /** Number that counts up the first time it scrolls into view. */
 function CountOnView({ to, suffix = '' }: { to: number; suffix?: string }) {
@@ -71,7 +54,7 @@ function NavBar() {
     <header className={cn('fixed inset-x-0 top-0 z-40 transition-all duration-300', scrolled ? 'border-b border-foreground/[0.06] bg-background/70 backdrop-blur-xl' : 'bg-transparent')}>
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-5">
         <Logo />
-        <nav className="hidden items-center gap-1 md:flex" aria-label="Sections">
+        <nav className="hidden items-center gap-1 lg:flex" aria-label="Sections">
           {NAV.map(([id, label]) => (
             <a key={id} href={`#${id}`} className="rounded-lg px-3 py-1.5 text-sm text-muted-foreground transition-colors hover:bg-foreground/[0.05] hover:text-foreground">{label}</a>
           ))}
@@ -80,14 +63,14 @@ function NavBar() {
           <ModeToggle />
           <ThemePicker />
           <Button className="hidden sm:inline-flex" nativeButton={false} render={<a href="/dashboard" />}><LayoutDashboard /> Open dashboard</Button>
-          <Button variant="outline" size="icon" className="md:hidden" aria-label="Menu" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
+          <Button variant="outline" size="icon" className="lg:hidden" aria-label="Menu" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
             {open ? <X /> : <Menu />}
           </Button>
         </div>
       </div>
       <AnimatePresence>
         {open && (
-          <motion.nav initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden border-t border-foreground/[0.06] bg-background/95 backdrop-blur-xl md:hidden" aria-label="Sections">
+          <motion.nav initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden border-t border-foreground/[0.06] bg-background/95 backdrop-blur-xl lg:hidden" aria-label="Sections">
             <div className="grid gap-1 p-3">
               {NAV.map(([id, label]) => (
                 <a key={id} href={`#${id}`} onClick={() => setOpen(false)} className="rounded-lg px-3 py-2 text-sm hover:bg-foreground/[0.05]">{label}</a>
@@ -372,9 +355,15 @@ export default function Landing() {
         <Hero />
         <Audience />
         <HowItWorks />
+        <Journey />
+        <SystemParts />
+        <Features />
+        <WhatIf />
         <Demo />
         <Compare />
         <Trust />
+        <GetStarted />
+        <Faq />
         <FinalCta />
       </main>
       <Footer />
