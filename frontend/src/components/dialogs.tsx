@@ -1,7 +1,6 @@
 import { useEffect, useState, type ReactNode } from 'react'
 import { motion } from 'motion/react'
 import { Banknote, CreditCard, Loader2, Repeat, Smartphone } from 'lucide-react'
-import { toast } from 'sonner'
 
 import { Button } from '@/components/ui/button'
 import {
@@ -17,7 +16,7 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { PersonAvatar, TapCardGraphic } from '@/components/shared'
 import { useAdmin } from '@/hooks/useAdmin'
-import { postJson, type Card } from '@/lib/api'
+import { type Card } from '@/lib/api'
 import { cn } from '@/lib/utils'
 
 function Field({ label, htmlFor, hint, children }: { label: string; htmlFor: string; hint?: string; children: ReactNode }) {
@@ -137,10 +136,8 @@ export function TopupDialog({ card, onClose, onDone }: { card: Card | null; onCl
     let ok = false
     if (method === 'cash') ok = !!(await post('/api/topup/cash', { uid: card.uid, amount }))
     else {
-      // M-Pesa prompts don't need the admin PIN: the customer confirms on their own phone.
-      const { status, data } = await postJson('/api/topup/mpesa', { uid: card.uid, amount })
-      ok = status < 400
-      ok ? toast.success(data.message || 'M-Pesa prompt sent') : toast.error(data.error || 'Could not send prompt')
+      // Needs the admin PIN too, so nobody on the public link can send payment prompts.
+      ok = !!(await post('/api/topup/mpesa', { uid: card.uid, amount }))
     }
     setBusy(false)
     if (ok) {
@@ -151,7 +148,7 @@ export function TopupDialog({ card, onClose, onDone }: { card: Card | null; onCl
 
   const quick = [50, 100, 200, 500, 1000]
   const methods = [
-    { id: 'mpesa' as const, label: 'M-Pesa prompt', Icon: Smartphone, desc: 'Customer enters PIN on their phone' },
+    { id: 'mpesa' as const, label: 'M-Pesa prompt', Icon: Smartphone, desc: 'Admin PIN, then the customer confirms' },
     { id: 'cash' as const, label: 'Cash at desk', Icon: Banknote, desc: 'Needs admin PIN' },
   ]
 

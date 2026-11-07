@@ -10,12 +10,13 @@ import { Switch } from '@/components/ui/switch'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { EmptyState, Panel, Pill, StatusDot, fadeUp, stagger } from '@/components/shared'
 import { useAdmin } from '@/hooks/useAdmin'
-import { postJson, type TelcoSettings, type TelcoStatus } from '@/lib/api'
+import { type TelcoSettings, type TelcoStatus } from '@/lib/api'
 import { shortTime } from '@/lib/format'
 
 /* ---------- phone-style USSD simulator ---------- */
 
 function UssdPhone({ code }: { code: string }) {
+  const post = useAdmin()
   const [phone, setPhone] = useState('')
   const [steps, setSteps] = useState<string[] | null>(null) // null = not dialled
   const [input, setInput] = useState('')
@@ -25,10 +26,9 @@ function UssdPhone({ code }: { code: string }) {
 
   const run = async (next: string[], sid: string) => {
     setBusy(true)
-    const { data } = await postJson('/api/ussd/simulate', { phone, text: next.join('*'), session_id: sid })
+    const data = await post('/api/ussd/simulate', { phone, text: next.join('*'), session_id: sid }, { quiet: true })
     setBusy(false)
-    if (data.error) {
-      toast.error(String(data.error))
+    if (!data) {
       setSteps(null)
       return
     }
