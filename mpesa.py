@@ -1,6 +1,7 @@
 """M-Pesa STK push (Daraja API). Settings come from mpesa_config.json."""
 import base64
 import json
+import os
 import time
 from datetime import datetime
 from pathlib import Path
@@ -13,6 +14,8 @@ _token = {"value": None, "expires": 0}
 
 def config():
     try:
+        if os.getenv("MPESA_CONFIG_JSON"):   # cloud: the file's contents as one environment variable
+            return json.loads(os.environ["MPESA_CONFIG_JSON"])
         return json.loads(CONFIG.read_text(encoding="utf-8"))
     except Exception:
         return {}

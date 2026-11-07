@@ -24,6 +24,7 @@ import serial
 from flask import Flask, Response, jsonify, redirect, request, send_from_directory, session
 from serial.tools import list_ports
 
+import config
 import bot
 import mpesa
 import sms
@@ -37,17 +38,18 @@ sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 HERE = Path(__file__).parent
 BAUD = 115200
-HTTP_PORT = 8000
+HTTP_PORT = config.PORT
 
-esp = {"port": None, "connected": False, "message": "Searching for ESP32..."}
+esp = {"port": None, "connected": False, "message": "Searching for ESP32...", "seen": 0.0}
+recent_tap_ids = []   # bridge tap ids already handled (the bridge retries, so ignore repeats)
 last_unknown = {"uid": None, "time": 0}
 
 app = Flask(__name__, static_folder=None)
 app.config["MAX_CONTENT_LENGTH"] = 64 * 1024
-secret_file = HERE / ".flask_secret"
+secret_file = config.DATA_DIR / ".flask_secret"
 if not secret_file.exists():
     secret_file.write_text(secrets.token_hex(32))
-app.secret_key = secret_file.read_text().strip()
+app.secret_key = config.env("FLASK_SECRET") or secret_file.read_text().strip()
 
 
 # ---------- ESP32 serial ----------
@@ -64,6 +66,15 @@ def find_port():
     return None
 
 
+def handle_uid(uid):
+    try:
+        ev = wallet.on_tap(uid)
+        if not ev["card"]:
+            last_unknown.update(uid=uid, time=time.time())
+    except Exception as e:
+        print(f"[TAP] error: {e}")
+
+
 def serial_loop():
     while True:
         port = find_port()
@@ -78,13 +89,7 @@ def serial_loop():
                 while True:
                     line = s.readline().decode(errors="ignore").strip()
                     if line.startswith("UID:"):
-                        uid = line[4:].strip().upper()
-                        try:
-                            ev = wallet.on_tap(uid)
-                            if not ev["card"]:
-                                last_unknown.update(uid=uid, time=time.time())
-                        except Exception as e:
-                            print(f"[TAP] error: {e}")
+                        handle_uid(line[4:].strip().upper())
                     elif line:
                         print(f"[ESP32] {line}")
                         if line.startswith(("READY", "ERROR")):
@@ -119,8 +124,8 @@ def admin_denied(b):
     can't guess it. (The message avoids the word "PIN" so the dashboard shows it
     instead of asking for the PIN again.)"""
     if not is_local() and str(wallet.settings().get("admin_pin", "1234")) == "1234":
-        return jsonify(error="Changes over the internet are off until the admin code in settings.json "
-                             "is changed from 1234. Then restart the dashboard."), 403
+        return jsonify(error="Changes over the internet are off until the admin code is changed from 1234 "
+                             "(settings.json on the laptop, or ADMIN_PIN on a cloud server). Then restart."), 403
     if not pin_ok(b.get("pin")):
         return jsonify(error="Wrong admin PIN"), 403
     return None
@@ -144,7 +149,7 @@ def require_login():
     if request.path == "/ussd":
         return ("", 404)
     # "/" is the public landing page; /assets/ and /favicon.svg are static build files (no data).
-    open_paths = ("/login", "/webhook", "/voice/", "/mpesa/callback", "/ussd/", "/sms/",
+    open_paths = ("/login", "/webhook", "/voice/", "/mpesa/callback", "/ussd/", "/sms/", "/bridge/",
                   "/welcome", "/assets/", "/favicon.svg")
     public_pages = ("/",)   # exact matches (every path starts with "/", so it can't be a prefix)
     if not logged_in() and request.path not in public_pages and not request.path.startswith(open_paths):
@@ -199,7 +204,7 @@ def data():
     unknown = last_unknown["uid"] if (last_unknown["uid"] and time.time() - last_unknown["time"] < 600
                                       and not store.get_card(last_unknown["uid"])) else None
     return jsonify({
-        "esp": esp,
+        "esp": reader_status(),
         "services": {**whatsapp.status(), "sms": sms.enabled(), "sms_provider": telco.get_sms().name,
                      "ussd_provider": telco.get_ussd().name},
         "lan_url": f"http://{lan_ip()}:{HTTP_PORT}/dashboard",
@@ -215,6 +220,53 @@ def data():
         "default_price": wallet.settings().get("default_price", 1),
         "mode": "prompt" if wallet.prompt_mode() else "wallet",
     })
+
+
+# ---------- laptop bridge (cloud mode): bridge.py forwards taps from the USB reader ----------
+
+UID_RE = re.compile(r"^[0-9A-F]{2}( [0-9A-F]{2}){3,9}$")
+
+
+def reader_status():
+    if config.READER != "bridge":
+        return {k: esp[k] for k in ("port", "connected", "message")}
+    if time.time() - esp["seen"] > 30:
+        return {"port": None, "connected": False, "message": "Laptop bridge offline - run start_bridge.bat on the laptop"}
+    return {k: esp[k] for k in ("port", "connected", "message")}
+
+
+def bridge_allowed():
+    token = config.BRIDGE_TOKEN
+    given = request.headers.get("Authorization", "").removeprefix("Bearer ").strip()
+    return bool(token) and secrets.compare_digest(given, token)
+
+
+@app.route("/bridge/status", methods=["POST"])
+def bridge_status():
+    if not bridge_allowed():
+        return jsonify(error="forbidden"), 403
+    b = body()
+    esp.update(port=str(b.get("port") or "")[:40] or None, connected=bool(b.get("connected")),
+               message=str(b.get("message") or "")[:120], seen=time.time())
+    return jsonify(ok=True)
+
+
+@app.route("/bridge/tap", methods=["POST"])
+def bridge_tap():
+    if not bridge_allowed():
+        return jsonify(error="forbidden"), 403
+    b = body()
+    uid = str(b.get("uid") or "").strip().upper()
+    tap_id = str(b.get("id") or "")[:64]
+    if not UID_RE.match(uid):
+        return jsonify(error="bad uid"), 400
+    if tap_id and tap_id in recent_tap_ids:
+        return jsonify(ok=True, duplicate=True)
+    if tap_id:
+        recent_tap_ids.append(tap_id)
+        del recent_tap_ids[:-500]
+    handle_uid(uid)
+    return jsonify(ok=True)
 
 
 def body():
@@ -519,7 +571,10 @@ if __name__ == "__main__":
     import logging
     logging.getLogger("werkzeug").setLevel(logging.ERROR)   # hide the per-request log lines
     store.init(wallet.settings().get("default_price", 1))
-    threading.Thread(target=serial_loop, daemon=True).start()
+    if config.READER == "usb":
+        threading.Thread(target=serial_loop, daemon=True).start()
+    else:
+        print("Reader: waiting for taps from the laptop bridge (bridge.py)")
     threading.Thread(target=connect_whatsapp, daemon=True).start()
     threading.Thread(target=connect_telco, daemon=True).start()
     threading.Thread(target=daily_sms_summary_loop, daemon=True).start()
@@ -528,4 +583,8 @@ if __name__ == "__main__":
     if "--no-browser" not in sys.argv:
         import webbrowser
         webbrowser.open(f"http://localhost:{HTTP_PORT}/dashboard")
-    app.run(host="0.0.0.0", port=HTTP_PORT, threaded=True)
+    try:
+        from waitress import serve   # production server (installed in the cloud image)
+        serve(app, host="0.0.0.0", port=HTTP_PORT, threads=16)
+    except ImportError:
+        app.run(host="0.0.0.0", port=HTTP_PORT, threaded=True)
