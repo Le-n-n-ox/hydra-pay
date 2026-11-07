@@ -6,7 +6,7 @@
 
 | Capability | Current behaviour | How to verify |
 | --- | --- | --- |
-| Dashboard startup | Flask serves the dashboard at `http://localhost:8000`. | Start `dashboard.py` and open the URL. |
+| Dashboard startup | Flask serves the landing page at `http://localhost:8000` and the dashboard at `http://localhost:8000/dashboard`. | Start `dashboard.py` and open the URL. |
 | ESP32 reader connection | Detects common USB serial adapters and reads `UID:` lines at 115200 baud. | Plug in the programmed board; dashboard status should show **Reader: connected**. |
 | Unknown card handling | Logs the UID and presents it as a new card in the dashboard for registration. | Tap an unregistered tag. |
 | Card management | Admin can add/edit a card's name, phone and price, or move a person's record to a replacement tag. | Use the Cards panel and provide the admin PIN. |
@@ -29,6 +29,7 @@
 | Gemini assistant and transcription | Builds a constrained, card-aware AI response and can transcribe incoming voice media. | Valid Gemini API key and network access. |
 | ElevenLabs voice messages | Creates a voice receipt and can reply to WhatsApp voice messages. | Valid ElevenLabs key; UltraMsg needs access to the audio or accepts base64 audio. |
 | USSD menu | Returns Africa's Talking `CON`/`END` responses for card information, recent payments, and M-Pesa top-up. | Africa's Talking service code configured to POST to public `/ussd`. |
+| Provider-neutral SMS/USSD | Switches ThriveVAS, Africa's Talking, or disabled (`none`) independently through `.env`; callbacks require a shared token. | Valid provider credentials, callback registration, and a public HTTPS URL. |
 
 ## Existing safeguards
 

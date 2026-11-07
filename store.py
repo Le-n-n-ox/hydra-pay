@@ -26,6 +26,16 @@ def now():
     return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 
+def use_database(path):
+    """Switch storage for tests. Production never calls this helper."""
+    global DB_PATH, _db
+    with _lock:
+        _db.close()
+        DB_PATH = Path(path)
+        _db = sqlite3.connect(DB_PATH, check_same_thread=False)
+        _db.row_factory = sqlite3.Row
+
+
 def init(default_price=1):
     with _lock:
         _db.executescript("""
@@ -166,6 +176,13 @@ def tap(uid):
                         (t, uid, "-", "unregistered"))
             _db.commit()
             return {"time": t, "uid": uid, "card": None, "result": "unregistered"}
+
+        if card.get("blocked"):
+            _db.execute("INSERT INTO scans (time, uid, direction, result, amount, balance) VALUES (?,?,?,?,?,?)",
+                        (t, uid, card["status"], "blocked", 0, card["balance"]))
+            _db.commit()
+            return {"time": t, "uid": uid, "card": card, "direction": card["status"], "result": "blocked",
+                    "balance": card["balance"], "price": card["price"], "tx_id": None}
 
         price = int(card["price"] or 0)
         tx_id = None
@@ -366,6 +383,11 @@ def save_ussd_session(session_id, phone, service_code, provider, steps, last_scr
 
 def recent_ussd_sessions(limit=20):
     return _rows("SELECT * FROM ussd_sessions ORDER BY last_seen DESC LIMIT ?", (limit,))
+
+
+def ussd_sessions_today(phone):
+    return _one("SELECT COUNT(*) AS count FROM ussd_sessions WHERE phone=? AND started LIKE ?",
+                (to_254(phone), datetime.now().strftime("%Y-%m-%d") + "%"))["count"]
 
 
 def append_ussd_step(session_id, step):

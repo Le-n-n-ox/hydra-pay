@@ -1,91 +1,148 @@
-# RFID Pay 💳
+# Hydra Pay 💳
 
-Swipe a card on the ESP32 reader, and the card owner gets an M-Pesa prompt on their phone.
-Payments show live on a dashboard, and receipts go out on WhatsApp.
+**Tap. Pay. Done.** A tap-card payment system for busy counters: canteens, shops, market stalls and matatus.
+
+A customer taps a card on the reader, an M-Pesa prompt appears on their phone, and once they enter their PIN the payment is confirmed with Safaricom, recorded, and a receipt is sent on WhatsApp or SMS. The owner watches everything live on a dashboard.
+
+## What it does
+
+| Area | Features |
+|---|---|
+| **Payments** | M-Pesa STK push on every tap (pay-per-tap) or a prepaid wallet balance. A payment is marked PAID only after Safaricom confirms it (callback, with a status check as backup). Cash top-ups and undo (undo adds a reversal entry; nothing is deleted). |
+| **Dashboard** (React) | Live stats, hourly activity and payment-outcome charts, live feed, who is inside. Cards: register, edit, top up, block/unblock, move a person to a replacement card. Payments and activity history with search, filters and CSV export. Light/dark/system mode and six colour themes. Works on phones. |
+| **Landing page** | Public page at `/` explaining the product, with an interactive demo (simulated, no real money). |
+| **WhatsApp** (UltraMsg) | Receipts with the M-Pesa code. Bot menu: my card, my payments, change my number, AI assistant (Gemini; English, Kiswahili, Sheng), help. Voice notes understood and answered (ElevenLabs). |
+| **SMS** (ThriveVAS or Africa's Talking) | Receipts, fallback when WhatsApp fails, low-balance and security alerts, delivery reports, inbound keywords. Emoji are stripped so each message stays one SMS. |
+| **USSD** (ThriveVAS or Africa's Talking) | Menu for any phone: my card, my payments, pay/top up, statement by SMS, block a lost card, change PIN, English/Kiswahili. Customer PIN with lockout. |
+| **Security** | Admin PIN for every change. Remote dashboard login stays off until the default PIN is changed. Callback URLs carry a secret token. Keys live in `.env`, never in code. |
+| **Reader** | ESP32 + RC522 over USB. The dashboard finds the port by itself and reconnects if the reader is unplugged. |
 
 ## How it works
 
+```text
+ Card tap
+    │
+    ▼
+ ESP32 + RC522 ──USB serial "UID:AA BB CC DD"──▶ dashboard.py  (Flask, port 8000)
+                                                  │
+                     ┌────────────────────────────┼────────────────────────────┐
+                     ▼                            ▼                            ▼
+              M-Pesa Daraja              WhatsApp (UltraMsg)          SMS / USSD
+              STK push + status          + Gemini + ElevenLabs        ThriveVAS or Africa's Talking
+                     │
+                     ▼
+              rfid.db (SQLite): cards, taps, wallet transactions, payments, SMS log, USSD sessions
+
+ Browser:  /            landing page (public)
+           /dashboard   dashboard (admin PIN when opened from another device)
 ```
- Card swipe                                   Card owner (WhatsApp)
-     |                                                 |
-     v                                                 v
- ESP32 + RC522 --USB--> dashboard.py (port 8000) <-- ngrok <-- UltraMsg (webhook)
-                          |  - swipe IN = M-Pesa prompt (mpesa.py, Daraja)
-                          |  - dashboard page (static/index.html)
-                          |  - WhatsApp menu, AI chat, voice notes (bot.py, whatsapp.py:
-                          |    UltraMsg + Gemini + ElevenLabs)
-                          |  - receipts after payment (wallet.py)
-                          v
-                       rfid.db  (SQLite: cards, swipes, payments - store.py)
-```
+
+ngrok gives the laptop a public HTTPS address, so Safaricom, UltraMsg and the SMS/USSD provider can reach the callbacks and people can open the pages from anywhere.
 
 ## Run it (every time)
-1. Plug in the ESP32.
-2. Double-click **`start.bat`** (or the **RFID Pay** shortcut on the Desktop). Two windows open,
-   **NGROK** and **RFID PAY**. Keep both open.
-3. It prints the webhook link and copies it to your clipboard. The bot also sets it in UltraMsg itself.
-   If WhatsApp doesn't reply, paste the link into **UltraMsg > Settings > Webhook URL**.
-4. Open http://localhost:8000. To add a card, tap it, click **Register it**, fill in name / phone / price,
-   then Save (asks for the admin PIN).
-5. WhatsApp the bot: **hi**.
 
-> The ngrok link changes every restart, and while RFID Pay runs it takes the WhatsApp number from AquaTrace.
+1. Plug in the ESP32 reader.
+2. Double-click **`start.bat`** (or the **RFID Pay** shortcut). Two windows open, **NGROK** and **RFID PAY**. Keep both open.
+3. Your browser opens the dashboard at **http://localhost:8000/dashboard**.
+   - Landing page: http://localhost:8000
+   - Phone on the same WiFi: `http://<laptop-ip>:8000/dashboard` (shown in the dashboard sidebar; allow Python through Windows Firewall if asked)
+   - From anywhere: your ngrok address, e.g. `https://<your-domain>.ngrok-free.dev` and `/dashboard`
+4. To add a card: tap it on the reader, click **Register it**, enter name, phone and price, then save with the admin PIN.
+5. WhatsApp the bot **hi** to see the customer menu.
 
-## Files
-| File | What it does |
+`start.bat` installs the Python packages, starts ngrok and the dashboard, sets the WhatsApp webhook automatically, and copies the webhook link to your clipboard. If WhatsApp doesn't reply, paste that link into **UltraMsg › Settings › Webhook URL**.
+
+> Free ngrok allows one tunnel at a time and shows a "Visit Site" warning page to first-time browser visitors. Your free ngrok address stays the same between restarts.
+
+## Configuration
+
+| File | What goes in it |
 |---|---|
-| `start.bat` / `get_ngrok_url.ps1` | One-click launcher (ngrok + dashboard/bot) |
-| `dashboard.py` | Web dashboard, reads the ESP32, `/webhook` for WhatsApp, `/mpesa/callback` |
-| `wallet.py` | What happens on a swipe, M-Pesa payments, receipts |
-| `mpesa.py` | Daraja STK push + status checks |
-| `bot.py` / `whatsapp.py` | WhatsApp menu, AI chat, voice notes |
-| `store.py` | The SQLite database `rfid.db` |
-| `settings.json` | Admin PIN, default price, business name, `"mode": "prompt"` (or `"wallet"`) |
-| `mpesa_config.json` | Daraja keys |
-| `.env` | UltraMsg / Gemini / ElevenLabs keys (keep private) |
-| `micropython/` | Code running on the ESP32 |
+| `settings.json` | Business name, `"mode"` (`"prompt"` = pay per tap, `"wallet"` = prepaid), **admin PIN** (change it from `1234`), prices and top-up limits, notification switches, USSD code. Most SMS/USSD switches can also be changed from the dashboard. |
+| `mpesa_config.json` | Safaricom Daraja keys, shortcode, passkey, environment (`sandbox` or live), callback URL. |
+| `.env` | Keys for UltraMsg, Gemini, ElevenLabs and the SMS/USSD provider. Copy **`.env.example`** for the full list. |
 
-## WhatsApp menu
-**hi**: 1 my card · 2 my recent payments · 3 chat with AI. Voice notes are understood (Gemini) and
-answered with a voice note (ElevenLabs).
+To turn on SMS with ThriveVAS, add to `.env`:
 
-## Phone access
-Same WiFi: the link at the bottom of the dashboard (allow Python through Windows Firewall if asked).
-Anywhere: the ngrok link. Remote login needs the admin PIN and stays off until you change it from 1234.
+```ini
+SMS_PROVIDER=thrivevas
+THRIVEVAS_API_KEY=...            # or THRIVEVAS_MSISDN + THRIVEVAS_PASSWORD so keys renew automatically
+TELCO_CALLBACK_TOKEN=...         # any long random string
+TELCO_CALLBACK_BASE_URL=https://<your-domain>.ngrok-free.dev
+```
 
-> **ESP32:** runs **MicroPython** with the code in `micropython/` (already uploaded).
-> The Arduino sketch in `RFID_ESP32/` is an alternative and isn't on the board.
-> To re-upload the MicroPython code: `python -m mpremote connect COM6 cp micropython/mfrc522.py : + cp micropython/main.py :`
+Then restart and use **Dashboard › SMS & USSD › Send a test SMS**. That page also shows the callback URLs to paste into the provider's portal. Full guide: [docs/USSD_SMS_SETUP.md](docs/USSD_SMS_SETUP.md).
 
-## 1. Wiring (RC522 -> ESP32)
+`.env`, `mpesa_config.json`, `.flask_secret` and `rfid.db` hold secrets or customer data. They are git-ignored; keep them private.
+
+## Project layout
+
+| Path | What it is |
+|---|---|
+| `start.bat`, `get_ngrok_url.ps1` | One-click launcher |
+| `dashboard.py` | Flask server: reads the reader, serves the pages, JSON API, M-Pesa / WhatsApp / SMS / USSD callbacks |
+| `wallet.py` | What happens on a tap, M-Pesa and cash top-ups, receipts, notifications |
+| `mpesa.py` | Daraja STK push and status checks |
+| `store.py` | SQLite database (`rfid.db`) |
+| `bot.py`, `whatsapp.py` | WhatsApp menu, AI chat, voice notes |
+| `sms.py`, `ussd.py`, `telco/` | SMS sending and logging, USSD menu, provider adapters (`thrivevas`, `africastalking`, `none`) |
+| `frontend/` | React source for the landing page and dashboard (Vite, TypeScript, Tailwind, shadcn/ui, Recharts, Motion). See [frontend/README.md](frontend/README.md). |
+| `static/` | Built frontend served by Flask. Rebuild with `cd frontend && npm run build`. |
+| `micropython/` | Firmware running on the ESP32 |
+| `RFID_ESP32/` | Arduino firmware (alternative, not on the board) |
+| `RFID_Tool/`, `tools/` | Utilities to read, dump and change tags |
+| `tests/` | Backend tests (`python -m pytest tests`) |
+| `docs/` | Overview, what works, what's left, SMS/USSD setup |
+| `pitch/` | Pitch decks and QR codes |
+| `Daraja_Prompt/` | Separate command-line tool: send an M-Pesa prompt, optional crypto pricing (own `config.json`) |
+
+## Hardware
+
+### Wiring (RC522 → ESP32)
 
 | RC522 pin | ESP32 pin |
-|-----------|-----------|
-| SDA (SS)  | GPIO 5    |
-| SCK       | GPIO 18   |
-| MOSI      | GPIO 23   |
-| MISO      | GPIO 19   |
-| IRQ       | not connected |
-| GND       | GND       |
-| RST       | GPIO 22   |
-| 3.3V      | 3V3  (**NOT 5V/VIN - 5V can kill the RC522**) |
+|---|---|
+| SDA (SS) | GPIO 5 |
+| SCK | GPIO 18 |
+| MOSI | GPIO 23 |
+| MISO | GPIO 19 |
+| RST | GPIO 22 |
+| IRQ | not connected |
+| GND | GND |
+| 3.3V | 3V3 (**not 5V/VIN, 5V can damage the RC522**) |
 
-## 2. Flash the ESP32
-1. Install Arduino IDE.
-2. Add ESP32 boards: File > Preferences > Additional boards URL:
-   `https://espressif.github.io/arduino-esp32/package_esp32_index.json`
-   then Tools > Board > Boards Manager > install **esp32 by Espressif**.
-3. Sketch > Include Library > Manage Libraries > install **MFRC522** (by GithubCommunity).
-4. Open `RFID_ESP32/RFID_ESP32.ino`, pick board **ESP32 Dev Module** and your COM port, Upload.
-   (If upload hangs on "Connecting...", hold the **BOOT** button on the ESP32.)
-5. Optional check: Serial Monitor at 115200 should say `READY: RC522 firmware 0x92` (or 0x91/0x88).
-   **Close the Serial Monitor afterwards** - only one program can use the port.
+### Firmware
 
-## 3. Run the dashboard
-Double-click `start_dashboard.bat`. Browser opens http://localhost:8000.
-Tap card/tag: first tap = IN, next tap = OUT, and so on.
+The ESP32 runs **MicroPython** with the code in `micropython/` (already uploaded). It prints `READY: RC522 firmware 0x..` when the reader is found and `UID:XX XX XX XX` once per tap.
 
-- Every scan is saved in `rfid_log.csv` (opens in Excel).
-- Give cards names: copy the UID from the dashboard into `names.json`, e.g.
-  `"A3 4F 12 9B": "My Card"` - names update live.
-- Wrong port picked? Run `python dashboard.py COM5` (use your port).
+To re-upload it (use your COM port):
+
+```bash
+python -m mpremote connect COM6 cp micropython/mfrc522.py : + cp micropython/main.py :
+```
+
+Only one program can use the serial port at a time, so close any serial monitor before starting the dashboard. If the wrong port is picked, run `python dashboard.py COM5`.
+
+## Development
+
+```bash
+# backend tests
+python -m pytest tests
+
+# frontend (landing on :5173, dashboard on /dashboard; API calls go to dashboard.py on :8000)
+cd frontend
+npm install
+npm run dev
+npm run build      # writes to ../static, which Flask serves
+```
+
+## More documentation
+
+- [docs/PROJECT_OVERVIEW.md](docs/PROJECT_OVERVIEW.md): architecture, components, endpoints
+- [docs/WHAT_WORKS.md](docs/WHAT_WORKS.md): implemented features and how to check them
+- [docs/WHAT_TO_ADD.md](docs/WHAT_TO_ADD.md): what's still needed before real-world use
+- [docs/USSD_SMS_SETUP.md](docs/USSD_SMS_SETUP.md): SMS and USSD providers
+
+---
+
+Team HYDRA-PAY · Technical University of Kenya
