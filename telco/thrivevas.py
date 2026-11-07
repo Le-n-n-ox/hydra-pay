@@ -72,14 +72,16 @@ class ThriveVasSms(SmsProvider):
         return attempt(True)[1] if code in (401, 428) and not _env("THRIVEVAS_API_KEY") else result
 
     def parse_delivery(self, req):
-        data = req.get_json(silent=True) or req.values
+        # ThriveVAS posts JSON without a Content-Type header, so parse the body regardless.
+        data = req.get_json(force=True, silent=True) or req.values
         status = {0: "FAILED_BILLING", 1: "FAILED", 2: "PENDING", 3: "DELIVERED"}.get(
             int(data.get("status", 2)), "PENDING")
+        detail = str(data.get("description") or data.get("status_description") or "")
         return DeliveryReport(str(data.get("transaction_id", "")), store.to_254(data.get("msisdn", "")), status,
-                              str(data.get("status_description", "")))
+                              detail if status.startswith("FAILED") else "")
 
     def parse_inbound(self, req):
-        data = req.get_json(silent=True) or req.values
+        data = req.get_json(force=True, silent=True) or req.values
         return InboundSms(store.to_254(data.get("msisdn", data.get("from", ""))), str(data.get("text", "")),
                           str(data.get("id", "")))
 
@@ -89,7 +91,7 @@ class ThriveVasUssd(UssdProvider):
     def _field(self, name, default):
         return _env("THRIVEVAS_USSD_FIELD_" + name, default)
     def parse(self, req):
-        raw = req.get_json(silent=True) or req.values
+        raw = req.get_json(force=True, silent=True) or req.values
         sid = str(raw.get(self._field("SESSION", "sessionId"), ""))
         text = str(raw.get(self._field("TEXT", "text"), ""))
         if _env("THRIVEVAS_USSD_INPUT", "cumulative") == "latest":

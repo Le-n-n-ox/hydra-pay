@@ -83,3 +83,30 @@ def test_africastalking_adapter_parse_and_render(monkeypatch):
         response = provider.render(ussd.UssdReply("Hello", False))
     assert parsed.phone == "254712345678" and parsed.text == "1"
     assert response.get_data(as_text=True) == "CON Hello"
+
+
+def test_thrivevas_delivery_report_without_content_type(monkeypatch):
+    """ThriveVAS posts JSON with no Content-Type; reports can arrive as PENDING after DELIVERED."""
+    from flask import Flask
+    from telco.thrivevas import ThriveVasSms
+
+    monkeypatch.setattr(telco, "get_sms", lambda: ThriveVasSms())
+    store.add_sms("0712345678", "payment", "Receipt", "thrivevas", status="SENT", message_id="30840")
+    app = Flask(__name__)
+
+    def report(status, description):
+        body = '{"transaction_id":30840,"msisdn":"+254712345678","status":%d,"description":"%s"}' % (status, description)
+        with app.test_request_context("/sms/delivery/x", method="POST", data=body):
+            from flask import request as req
+            assert sms.delivery(req)
+        return store.recent_sms(1)[0]
+
+    assert report(3, "DeliveredToTerminal")["status"] == "DELIVERED"
+    assert report(2, "SUCCESS")["status"] == "DELIVERED"          # late pending must not undo delivered
+    store.add_sms("0712345678", "payment", "Receipt", "thrivevas", status="SENT", message_id="30841")
+    body = '{"transaction_id":30841,"msisdn":"+254712345678","status":0,"description":"Insufficient credit"}'
+    with app.test_request_context("/sms/delivery/x", method="POST", data=body):
+        from flask import request as req
+        sms.delivery(req)
+    row = store.recent_sms(1)[0]
+    assert row["status"] == "FAILED_BILLING" and row["error"] == "Insufficient credit"

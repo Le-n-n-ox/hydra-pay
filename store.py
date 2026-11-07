@@ -336,7 +336,9 @@ def update_sms(sms_id, **fields):
 
 def update_sms_delivery(message_id, phone, status, error=""):
     with _lock:
-        row = _db.execute("SELECT id FROM sms_log WHERE message_id=? ORDER BY id DESC LIMIT 1", (str(message_id),)).fetchone()
+        row = _db.execute("SELECT id, status FROM sms_log WHERE message_id=? ORDER BY id DESC LIMIT 1", (str(message_id),)).fetchone()
+        if row and status == "PENDING" and row[1] in ("DELIVERED", "FAILED", "FAILED_BILLING"):
+            return True   # a late "pending" report must not undo a final result
         if row:
             _db.execute("UPDATE sms_log SET status=?, error=? WHERE id=?", (status, error, row[0]))
             _db.commit()
