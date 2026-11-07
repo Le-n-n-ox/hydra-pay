@@ -208,7 +208,10 @@ function CardsTable({ cards, drafts, setDraft, onSave, onBlock }) {
 function TelcoPanel({ telco, post, say }) {
   const [phone, setPhone] = useState(''), [text, setText] = useState('Hydra Pay SMS test');
   const [simPhone, setSimPhone] = useState(''), [simText, setSimText] = useState(''), [out, setOut] = useState('');
+  const [code, setCode] = useState(''), [admin, setAdmin] = useState(''), [receipts, setReceipts] = useState(true);
+  useEffect(() => { if (telco?.settings) { setCode(telco.settings.ussd_code || ''); setAdmin(telco.settings.admin_phone || ''); setReceipts(!!telco.settings.sms_receipts); } }, [telco]);
   const test = async () => { if (await post('/api/sms/test', { phone, text })) say('SMS queued'); };
+  const save = async () => { if (await post('/api/telco/settings', {ussd_code:code, admin_phone:admin, sms_receipts:receipts})) say('Telco settings saved'); };
   const simulate = async () => {
     const r = await fetch('/api/ussd/simulate', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({phone:simPhone,text:simText})});
     const j = await r.json().catch(()=>({error:'Server error'})); setOut(j.error || ((j.end?'END ':'CON ')+j.message));
@@ -219,6 +222,7 @@ function TelcoPanel({ telco, post, say }) {
     <div className="form"><div><label>Test SMS phone</label><input value={phone} onChange={e=>setPhone(e.target.value)} placeholder="0712 345 678" /></div><div><label>Message</label><input value={text} onChange={e=>setText(e.target.value)} /></div><div><button onClick={test}>Send test SMS</button></div></div>
     <div className="form"><div><label>USSD simulator phone</label><input value={simPhone} onChange={e=>setSimPhone(e.target.value)} placeholder="0712 345 678" /></div><div><label>Full input (e.g. 1*1234)</label><input value={simText} onChange={e=>setSimText(e.target.value)} placeholder="Leave blank to start" /></div><div><button className="gray" onClick={simulate}>Run simulator</button></div></div>
     {out && <pre className="muted" style={{whiteSpace:'pre-wrap'}}>{out}</pre>}
+    <div className="form"><div><label>USSD code</label><input value={code} onChange={e=>setCode(e.target.value)} placeholder="*XXX*YY#" /></div><div><label>Admin SMS phone</label><input value={admin} onChange={e=>setAdmin(e.target.value)} placeholder="0712 345 678" /></div><div><label><input type="checkbox" checked={receipts} onChange={e=>setReceipts(e.target.checked)} style={{width:'auto',marginRight:8}} />SMS receipts</label></div><div><button className="gray" onClick={save}>Save settings</button></div></div>
   </div>;
 }
 
