@@ -1,0 +1,10 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "vite",
+  "outputDirectory": "dist",
+  "cleanUrls": true,
+  "redirects": [
+    { "source": "/dashboard", "destination": "https://barometer-swerve-yearly.ngrok-free.dev/dashboard", "permanent": false },
+    { "source": "/welcome", "destination": "/", "permanent": true }
+  ]
+}

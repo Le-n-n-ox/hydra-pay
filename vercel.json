@@ -3,7 +3,7 @@
   "framework": null,
   "installCommand": "npm ci --prefix frontend",
   "buildCommand": "npm run build --prefix frontend",
-  "outputDirectory": "static",
+  "outputDirectory": "frontend/dist",
   "cleanUrls": true,
   "redirects": [
     { "source": "/dashboard", "destination": "https://barometer-swerve-yearly.ngrok-free.dev/dashboard", "permanent": false },
