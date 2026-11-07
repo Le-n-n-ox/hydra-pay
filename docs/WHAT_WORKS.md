@@ -6,7 +6,7 @@
 
 | Capability | Current behaviour | How to verify |
 | --- | --- | --- |
-| Dashboard startup | Flask serves the dashboard at `http://localhost:8000`. | Start `dashboard.py` and open the URL. |
+| Dashboard startup | Flask serves the landing page at `http://localhost:8000` and the dashboard at `http://localhost:8000/dashboard`. | Start `dashboard.py` and open the URL. |
 | ESP32 reader connection | Detects common USB serial adapters and reads `UID:` lines at 115200 baud. | Plug in the programmed board; dashboard status should show **Reader: connected**. |
 | Unknown card handling | Logs the UID and presents it as a new card in the dashboard for registration. | Tap an unregistered tag. |
 | Card management | Admin can add/edit a card's name, phone and price, or move a person's record to a replacement tag. | Use the Cards panel and provide the admin PIN. |

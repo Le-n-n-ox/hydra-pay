@@ -29,3 +29,7 @@ graphify-out/
 
 # Contains real phone numbers tied to cards
 tag_reads.md
+
+# Frontend build tooling (the built app lives in static/)
+frontend/node_modules/
+frontend/dist/

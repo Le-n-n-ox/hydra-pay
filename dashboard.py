@@ -126,7 +126,7 @@ def login():
     if request.method == "POST":
         if pin_ok(request.form.get("pin")):
             session["ok"] = True
-            return redirect("/")
+            return redirect("/dashboard")
         time.sleep(1)
         return LOGIN_PAGE % '<div class="err">Wrong PIN</div>'
     return LOGIN_PAGE % ""
@@ -136,8 +136,11 @@ def login():
 def require_login():
     if request.path == "/ussd":
         return ("", 404)
-    open_paths = ("/login", "/webhook", "/voice/", "/mpesa/callback", "/ussd/", "/sms/")
-    if not logged_in() and not request.path.startswith(open_paths):
+    # "/" is the public landing page; /assets/ and /favicon.svg are static build files (no data).
+    open_paths = ("/login", "/webhook", "/voice/", "/mpesa/callback", "/ussd/", "/sms/",
+                  "/welcome", "/assets/", "/favicon.svg")
+    public_pages = ("/",)   # exact matches (every path starts with "/", so it can't be a prefix)
+    if not logged_in() and request.path not in public_pages and not request.path.startswith(open_paths):
         if request.path.startswith("/api/"):
             return jsonify(error="login required"), 401
         return redirect("/login")
@@ -156,7 +159,30 @@ def lan_ip():
 
 @app.route("/")
 def index():
+    """Public landing page: what Hydra Pay is and how it works (no login, no live data)."""
     return send_from_directory(HERE / "static", "index.html")
+
+
+@app.route("/dashboard")
+def dashboard_page():
+    return send_from_directory(HERE / "static", "dashboard.html")
+
+
+# React build output (frontend/ -> npm run build -> static/)
+@app.route("/assets/<path:name>")
+def assets(name):
+    return send_from_directory(HERE / "static" / "assets", name, max_age=31536000)
+
+
+@app.route("/favicon.svg")
+def favicon():
+    return send_from_directory(HERE / "static", "favicon.svg")
+
+
+@app.route("/welcome")
+def welcome():
+    """Old landing-page address; the landing page is now the home page."""
+    return redirect("/")
 
 
 @app.route("/api/data")
@@ -169,7 +195,7 @@ def data():
         "esp": esp,
         "services": {**whatsapp.status(), "sms": sms.enabled(), "sms_provider": telco.get_sms().name,
                      "ussd_provider": telco.get_ussd().name},
-        "lan_url": f"http://{lan_ip()}:{HTTP_PORT}",
+        "lan_url": f"http://{lan_ip()}:{HTTP_PORT}/dashboard",
         "public_url": whatsapp.public_url(),
         "cards": cards,
         "inside": [c for c in cards if c["status"] == "IN"],
@@ -440,7 +466,7 @@ def connect_whatsapp():
         if url:
             ok, info = whatsapp.set_webhook(url + "/webhook")
             print(f"WhatsApp webhook -> {url}/webhook : {'set' if ok else 'FAILED ' + info}")
-            print(f"Dashboard from anywhere: {url}")
+            print(f"Landing page from anywhere: {url}   Dashboard: {url}/dashboard")
             return
         time.sleep(2)
     print("WhatsApp: ngrok is not running, so incoming WhatsApp messages won't reach the bot "
@@ -487,8 +513,8 @@ if __name__ == "__main__":
     threading.Thread(target=connect_telco, daemon=True).start()
     threading.Thread(target=daily_sms_summary_loop, daemon=True).start()
     threading.Thread(target=wallet.recheck_stuck, daemon=True).start()
-    print(f"Dashboard: http://localhost:{HTTP_PORT}   phone on same WiFi: http://{lan_ip()}:{HTTP_PORT}")
+    print(f"Landing page: http://localhost:{HTTP_PORT}   Dashboard: http://localhost:{HTTP_PORT}/dashboard   phone on same WiFi: http://{lan_ip()}:{HTTP_PORT}/dashboard")
     if "--no-browser" not in sys.argv:
         import webbrowser
-        webbrowser.open(f"http://localhost:{HTTP_PORT}")
+        webbrowser.open(f"http://localhost:{HTTP_PORT}/dashboard")
     app.run(host="0.0.0.0", port=HTTP_PORT, threaded=True)

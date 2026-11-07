@@ -25,7 +25,7 @@ Payments show live on a dashboard, and receipts go out on WhatsApp.
    **NGROK** and **RFID PAY**. Keep both open.
 3. It prints the webhook link and copies it to your clipboard. The bot also sets it in UltraMsg itself.
    If WhatsApp doesn't reply, paste the link into **UltraMsg > Settings > Webhook URL**.
-4. Open http://localhost:8000. To add a card, tap it, click **Register it**, fill in name / phone / price,
+4. Open http://localhost:8000/dashboard (http://localhost:8000 is the public landing page). To add a card, tap it, click **Register it**, fill in name / phone / price,
    then Save (asks for the admin PIN).
 5. WhatsApp the bot: **hi**.
 
@@ -83,7 +83,7 @@ Anywhere: the ngrok link. Remote login needs the admin PIN and stays off until y
    **Close the Serial Monitor afterwards** - only one program can use the port.
 
 ## 3. Run the dashboard
-Double-click `start_dashboard.bat`. Browser opens http://localhost:8000.
+Double-click `start_dashboard.bat`. Browser opens http://localhost:8000/dashboard.
 Tap card/tag: first tap = IN, next tap = OUT, and so on.
 
 - Every scan is saved in `rfid_log.csv` (opens in Excel).

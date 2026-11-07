@@ -96,7 +96,7 @@ if errorlevel 1 (
     echo [!!] RFID Pay is NOT answering on port 8000, so ngrok will show "Bad Gateway".
     echo      Look at the RFID PAY window - the red error text there is the reason.
 ) else (
-    echo [OK] RFID Pay is running.  Dashboard: http://localhost:8000
+    echo [OK] RFID Pay is running.  Dashboard: http://localhost:8000/dashboard   Landing page: http://localhost:8000
 )
 echo.
 echo Keep the NGROK and RFID PAY windows open. You can close this one.
