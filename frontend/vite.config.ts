@@ -4,6 +4,7 @@ import react from '@vitejs/plugin-react'
 import { defineConfig, type Plugin } from 'vite'
 
 // Built into ../static so Flask (dashboard.py) serves it on port 8000.
+// On Vercel (VERCEL=1) it builds into ./dist, the folder Vercel expects.
 // `npm run dev` proxies the API to a running dashboard.py.
 const flask = 'http://127.0.0.1:8000'
 
@@ -20,7 +21,7 @@ export default defineConfig({
   plugins: [react(), tailwindcss(), dashboardRoute()],
   resolve: { alias: { '@': path.resolve(import.meta.dirname, './src') } },
   build: {
-    outDir: '../static',
+    outDir: process.env.VERCEL ? 'dist' : '../static',
     emptyOutDir: true,
     chunkSizeWarningLimit: 1200,
     // Two pages: the public landing page (index.html -> /) and the dashboard (dashboard.html -> /dashboard).
