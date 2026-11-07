@@ -78,7 +78,7 @@ export function DemoSim() {
             </button>
           ))}
         </div>
-        <span className="rounded-full bg-amber-500/15 px-2.5 py-0.5 text-xs font-medium text-warn ring-1 ring-amber-500/30">Simulation · no real money</span>
+        <span className="rounded-full bg-amber-500/15 px-2.5 py-0.5 text-xs font-medium text-warn ring-1 ring-amber-500/30">Demo · no real money</span>
       </div>
 
       <div className="grid gap-6 p-5 lg:grid-cols-[1fr_15rem]">
@@ -139,16 +139,16 @@ export function DemoSim() {
             {busy ? <Loader2 className="animate-spin" /> : <CreditCard />} Tap card
           </Button>
           {mode === 'prompt' && (
-            <Button variant="outline" size="sm" onClick={() => tap(true)} disabled={busy}>Tap, then decline on phone</Button>
+            <Button variant="outline" size="sm" onClick={() => tap(true)} disabled={busy}>Tap, then cancel on phone</Button>
           )}
           <div className="relative h-20 overflow-hidden rounded-2xl bg-slate-900 p-3 text-white ring-1 ring-white/10">
             <AnimatePresence mode="wait">
               <motion.p key={phone} initial={{ y: 14, opacity: 0 }} animate={{ y: 0, opacity: 1 }} exit={{ y: -14, opacity: 0 }} className="text-xs leading-snug">
                 {phone === 'idle' && <span className="text-white/50">Customer's phone</span>}
                 {phone === 'prompt' && <>📲 <b>M-PESA:</b> Pay KSh {PEOPLE[who].price} to HYDRA PAY? Enter PIN</>}
-                {phone === 'paid' && <>✅ Confirmed by Safaricom. Receipt sent on WhatsApp.</>}
-                {phone === 'declined' && <>❌ Cancelled. Marked NOT PAID, nothing recorded as paid.</>}
-                {phone === 'deducted' && <>💳 KSh {PEOPLE[who].price} taken from the prepaid balance. No PIN needed.</>}
+                {phone === 'paid' && <>✅ Paid. Receipt sent on WhatsApp.</>}
+                {phone === 'declined' && <>❌ Cancelled. Not counted as paid.</>}
+                {phone === 'deducted' && <>💳 KSh {PEOPLE[who].price} taken from their balance. No PIN needed.</>}
               </motion.p>
             </AnimatePresence>
           </div>

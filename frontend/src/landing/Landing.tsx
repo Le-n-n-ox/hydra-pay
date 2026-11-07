@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
-import { AnimatePresence, motion, useInView, useScroll, useSpring, useTransform } from 'motion/react'
-import { ArrowRight, Check, ChevronDown, Code2, LayoutDashboard, Menu, Minus, Play, ShieldCheck, X } from 'lucide-react'
+import { AnimatePresence, motion, useInView, useReducedMotion, useScroll, useSpring, useTransform } from 'motion/react'
+import { ArrowRight, Check, ChevronDown, LayoutDashboard, Menu, Minus, Play, ShieldCheck, X } from 'lucide-react'
 
 import { Button } from '@/components/ui/button'
 import { AnimatedNumber, Background } from '@/components/shared'
@@ -10,12 +10,11 @@ import { HeroGraphic } from '@/landing/HeroGraphic'
 import * as C from '@/landing/content'
 import { cn } from '@/lib/utils'
 
-const REPO = 'https://github.com/Le-n-n-ox/hydra-pay'
 const NAV = [
+  ['who', "Who it's for"],
   ['how', 'How it works'],
   ['demo', 'Try it'],
-  ['features', 'Features'],
-  ['compare', 'Compare'],
+  ['compare', 'Why Hydra Pay'],
 ] as const
 
 /* ---------- small building blocks ---------- */
@@ -112,7 +111,7 @@ function Hero() {
       <div>
         <motion.span initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="glass inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium">
           <span className="relative flex size-2"><span className="absolute inset-0 animate-ping-slow rounded-full bg-emerald-400" /><span className="relative size-2 rounded-full bg-emerald-400" /></span>
-          Working prototype · DTMES 2026
+          Works with M-Pesa
         </motion.span>
         <h1 className="mt-6 text-5xl font-bold leading-[1.05] tracking-tight sm:text-6xl lg:text-7xl">
           {words.map((w, i) => (
@@ -123,14 +122,14 @@ function Hero() {
           ))}
         </h1>
         <motion.p initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.6 }} className="mt-6 max-w-xl text-lg text-muted-foreground sm:text-xl">
-          Hydra Pay is a low-cost <b className="text-foreground">ESP32 + RFID</b> tap-card system that takes <b className="text-foreground">M-Pesa</b> payments, confirms them with Safaricom and records every sale, for businesses that serve many customers fast: canteens, market traders and matatus.
+          Customers tap a card and pay with <b className="text-foreground">M-Pesa</b>. You get paid, confirmed and recorded, with no change to count and no fake messages.
         </motion.p>
         <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.75 }} className="mt-8 flex flex-wrap gap-3">
           <Button className="h-11 px-5 text-base" nativeButton={false} render={<a href="#demo" />}><Play /> Try the demo</Button>
           <Button variant="outline" className="h-11 px-5 text-base" nativeButton={false} render={<a href="#how" />}>How it works <ArrowRight /></Button>
         </motion.div>
         <motion.ul initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.9 }} className="mt-8 flex flex-wrap gap-x-5 gap-y-2 text-sm text-muted-foreground">
-          {['Verified by Safaricom', 'Receipts on WhatsApp & SMS', 'USSD for any phone'].map((t) => (
+          {['Confirmed by Safaricom', 'Receipts on WhatsApp & SMS', 'Works on any phone'].map((t) => (
             <li key={t} className="flex items-center gap-1.5"><Check className="size-4 text-good" />{t}</li>
           ))}
         </motion.ul>
@@ -138,89 +137,83 @@ function Hero() {
       <motion.div initial={{ opacity: 0, scale: 0.94 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.3, duration: 0.8, ease: [0.16, 1, 0.3, 1] }}>
         <HeroGraphic />
       </motion.div>
-      <motion.a href="#problem" aria-label="Scroll down" animate={{ y: [0, 8, 0] }} transition={{ duration: 2, repeat: Infinity }} className="absolute bottom-2 left-1/2 hidden -translate-x-1/2 text-muted-foreground lg:block">
+      <motion.a href="#who" aria-label="Scroll down" animate={{ y: [0, 8, 0] }} transition={{ duration: 2, repeat: Infinity }} className="absolute bottom-2 left-1/2 hidden -translate-x-1/2 text-muted-foreground lg:block">
         <ChevronDown />
       </motion.a>
     </section>
   )
 }
 
-function TechStrip() {
-  const items = ['ESP32 + RC522', 'M-Pesa Daraja', 'WhatsApp', 'Gemini AI', 'ElevenLabs voice', 'SMS + USSD', 'Flask + SQLite', 'React dashboard']
+function Audience() {
   return (
-    <div className="relative overflow-hidden border-y border-foreground/[0.06] py-5 [mask-image:linear-gradient(90deg,transparent,black_12%,black_88%,transparent)]">
-      <motion.div className="flex w-max gap-10" animate={{ x: ['0%', '-50%'] }} transition={{ duration: 30, repeat: Infinity, ease: 'linear' }}>
-        {[...items, ...items].map((t, i) => (
-          <span key={i} className="flex items-center gap-2 whitespace-nowrap text-sm font-medium text-muted-foreground">
-            <span className="size-1.5 rounded-full bg-gradient-to-r from-brand-1 to-brand-2" />{t}
-          </span>
-        ))}
-      </motion.div>
-    </div>
-  )
-}
-
-function Problem() {
-  return (
-    <Section id="problem" eyebrow="The problem" title="Busy small businesses lose time and money at the till" intro="Owners need an affordable way to accept, verify and record payments without slowing down.">
+    <Section id="who" eyebrow="Who it's for" title="Made for busy counters">
       <div className="grid gap-5 md:grid-cols-3">
-        {C.problems.map((p, i) => (
-          <Reveal key={p.title} delay={i * 0.08}>
-            <motion.div whileHover={{ y: -6 }} className="glass h-full rounded-3xl p-6">
-              <div className="mb-4 grid size-12 place-items-center rounded-2xl bg-rose-500/15 text-bad ring-1 ring-rose-500/25"><p.icon className="size-6" /></div>
-              <h3 className="text-lg font-semibold">{p.title}</h3>
-              <p className="mt-2 text-muted-foreground">{p.body}</p>
+        {C.audiences.map((a, i) => (
+          <Reveal key={a.title} delay={i * 0.08}>
+            <motion.div whileHover={{ y: -6 }} className="glass group h-full rounded-3xl p-6 text-center">
+              <span className="mx-auto mb-4 grid size-14 place-items-center rounded-2xl bg-gradient-to-br from-brand-1 to-brand-2 text-white shadow-lg shadow-brand-1/25 transition-transform duration-300 group-hover:-rotate-6 group-hover:scale-110">
+                <a.icon className="size-7" />
+              </span>
+              <h3 className="text-lg font-semibold">{a.title}</h3>
+              <p className="mt-1 text-muted-foreground">{a.body}</p>
             </motion.div>
           </Reveal>
         ))}
       </div>
-      <div className="mt-10 grid gap-5 sm:grid-cols-2">
-        {C.stats.map((s, i) => (
-          <Reveal key={s.label} delay={i * 0.1}>
-            <div className="glass flex items-center gap-5 rounded-3xl p-6">
-              <p className="bg-gradient-to-br from-brand-1 to-brand-2 bg-clip-text text-5xl font-bold tabular-nums text-transparent sm:text-6xl"><CountOnView to={s.value} suffix={s.suffix} /></p>
-              <p className="text-muted-foreground">{s.label}</p>
-            </div>
-          </Reveal>
-        ))}
-      </div>
-      <p className="mt-4 text-center text-xs text-muted-foreground">{C.statsSource}</p>
     </Section>
   )
 }
 
 function HowItWorks() {
   const ref = useRef<HTMLDivElement>(null)
-  const { scrollYProgress } = useScroll({ target: ref, offset: ['start 75%', 'end 55%'] })
+  const { scrollYProgress } = useScroll({ target: ref, offset: ['start 80%', 'end 60%'] })
   const line = useSpring(scrollYProgress, { stiffness: 100, damping: 30 })
+  const reduce = useReducedMotion()
   const [mode, setMode] = useState<'prompt' | 'wallet'>('prompt')
   const M = C.modes[mode]
 
   return (
-    <Section id="how" eyebrow="How it works" title="One tap: pay, verify and record in one flow" intro="The customer only taps and enters their M-Pesa PIN. Everything else happens automatically.">
-      <div ref={ref} className="relative mx-auto max-w-3xl">
-        <div className="absolute bottom-6 left-6 top-6 w-0.5 bg-foreground/10 sm:left-1/2 sm:-translate-x-1/2" />
-        <motion.div style={{ scaleY: line }} className="absolute bottom-6 left-6 top-6 w-0.5 origin-top bg-gradient-to-b from-brand-1 to-brand-2 sm:left-1/2 sm:-translate-x-1/2" />
-        <ol className="grid gap-10">
+    <Section id="how" eyebrow="How it works" title="Paid in seconds">
+      <div ref={ref} className="relative">
+        {/* progress line: horizontal through the step numbers on wide screens, vertical on phones */}
+        <div className="absolute left-[12.5%] right-[12.5%] top-6 hidden h-0.5 bg-foreground/10 lg:block" />
+        <motion.div style={{ scaleX: line }} className="absolute left-[12.5%] right-[12.5%] top-6 hidden h-0.5 origin-left bg-gradient-to-r from-brand-1 to-brand-2 lg:block" />
+        <div className="absolute bottom-6 left-6 top-6 w-0.5 bg-foreground/10 lg:hidden" />
+        <motion.div style={{ scaleY: line }} className="absolute bottom-6 left-6 top-6 w-0.5 origin-top bg-gradient-to-b from-brand-1 to-brand-2 lg:hidden" />
+        {!reduce && (
+          <motion.span
+            aria-hidden
+            className="absolute top-6 z-[5] hidden size-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-brand-1 shadow-[0_0_12px] shadow-brand-1 lg:block"
+            animate={{ left: ['12.5%', '87.5%'] }}
+            transition={{ duration: 3.2, repeat: Infinity, ease: 'easeInOut', repeatDelay: 0.6 }}
+          />
+        )}
+        <ol className="grid gap-6 lg:grid-cols-4 lg:gap-5">
           {C.steps.map((s, i) => (
-            <li key={s.title} className={cn('relative grid items-center gap-4 pl-16 sm:grid-cols-2 sm:gap-16 sm:pl-0', i % 2 && 'sm:[&>div:first-of-type]:order-2')}>
-              <motion.span initial={{ scale: 0 }} whileInView={{ scale: 1 }} viewport={{ once: true, margin: '-100px' }} transition={{ type: 'spring', stiffness: 300, damping: 18 }}
-                className="absolute left-6 top-1/2 z-10 grid size-12 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-gradient-to-br from-brand-1 to-brand-2 text-lg font-bold text-white shadow-lg shadow-brand-1/40 ring-4 ring-background sm:left-1/2">
+            <motion.li key={s.title} className="relative pl-16 lg:pl-0" initial="hidden" whileInView="show" viewport={{ once: true, margin: '-60px' }}>
+              {/* the li (not the zero-size circle) is observed, so the pop-in always fires */}
+              <motion.span
+                variants={{ hidden: { scale: 0 }, show: { scale: 1 } }}
+                transition={{ type: 'spring', stiffness: 300, damping: 18, delay: i * 0.12 }}
+                className="absolute left-6 top-6 z-10 grid size-12 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full bg-gradient-to-br from-brand-1 to-brand-2 text-lg font-bold text-white shadow-lg shadow-brand-1/40 ring-4 ring-background lg:left-1/2"
+              >
                 {i + 1}
               </motion.span>
-              <Reveal className={cn(i % 2 ? 'sm:pl-10' : 'sm:pr-10 sm:text-right')}>
-                <h3 className="text-2xl font-semibold">{s.title}</h3>
-                <p className="mt-2 text-muted-foreground">{s.body}</p>
+              <Reveal delay={i * 0.12} className="h-full lg:pt-16">
+                <motion.div whileHover={{ y: -6 }} className="glass group h-full rounded-3xl p-5">
+                  <div className="mb-3 grid size-10 place-items-center rounded-xl bg-brand-1/15 text-brand-text ring-1 ring-brand-1/25 transition-transform duration-300 group-hover:-rotate-6 group-hover:scale-110">
+                    <s.icon className="size-5" />
+                  </div>
+                  <h3 className="text-xl font-semibold">{s.title}</h3>
+                  <p className="mt-2 text-sm text-muted-foreground">{s.body}</p>
+                </motion.div>
               </Reveal>
-              <Reveal delay={0.1} className={cn(i % 2 ? 'sm:pr-10' : 'sm:pl-10')}>
-                <div className="glass rounded-2xl p-4 text-sm text-muted-foreground">{s.detail}</div>
-              </Reveal>
-            </li>
+            </motion.li>
           ))}
         </ol>
       </div>
 
-      <Reveal className="mx-auto mt-20 max-w-3xl">
+      <Reveal className="mx-auto mt-12 max-w-3xl">
         <div className="glass rounded-3xl p-6 sm:p-8">
           <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
             <h3 className="text-xl font-semibold">Two ways to charge</h3>
@@ -254,29 +247,8 @@ function HowItWorks() {
 
 function Demo() {
   return (
-    <Section id="demo" eyebrow="Try it" title="See a payment land on the dashboard" intro="This is a simulation of the real dashboard: tap a card, watch the M-Pesa prompt, and see the record appear the moment Safaricom confirms.">
+    <Section id="demo" eyebrow="Try it" title="See it in action">
       <Reveal><DemoSim /></Reveal>
-    </Section>
-  )
-}
-
-function Features() {
-  return (
-    <Section id="features" eyebrow="Everything it does" title="Built for the till, the queue and the end of the day">
-      <div className="grid auto-rows-fr grid-flow-dense gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {C.features.map((f, i) => (
-          <Reveal key={f.title} delay={(i % 4) * 0.05} className={cn(f.wide && 'lg:col-span-2')}>
-            <motion.div whileHover={{ y: -5 }} className="glass group relative h-full overflow-hidden rounded-3xl p-5">
-              <div className="absolute -right-12 -top-12 size-36 rounded-full bg-gradient-to-br from-brand-1 to-brand-2 opacity-0 blur-3xl transition-opacity duration-500 group-hover:opacity-25" />
-              <div className="mb-4 grid size-11 place-items-center rounded-2xl bg-gradient-to-br from-brand-1 to-brand-2 text-white shadow-lg shadow-brand-1/25 transition-transform duration-300 group-hover:rotate-[-6deg] group-hover:scale-110">
-                <f.icon className="size-5" />
-              </div>
-              <h3 className="font-semibold">{f.title}</h3>
-              <p className="mt-1.5 text-sm text-muted-foreground">{f.body}</p>
-            </motion.div>
-          </Reveal>
-        ))}
-      </div>
     </Section>
   )
 }
@@ -288,10 +260,12 @@ function MarkIcon({ m }: { m: C.Mark }) {
 }
 
 function Compare() {
+  const tableRef = useRef<HTMLDivElement>(null)
+  const seen = useInView(tableRef, { once: true, margin: '-80px' })
   return (
-    <Section id="compare" eyebrow="How it's different" title="Less friction at the till, clearer records after it" intro="Hydra Pay doesn't replace M-Pesa. It sits on top of the habits people already have and fixes the slow, unverified and unrecorded parts.">
+    <Section id="compare" eyebrow="Why Hydra Pay" title="Better than cash or a till number">
       <Reveal>
-        <div className="glass overflow-x-auto rounded-3xl">
+        <div ref={tableRef} className="glass overflow-x-auto rounded-3xl">
           <table className="w-full min-w-[720px] text-sm">
             <thead>
               <tr className="border-b border-foreground/[0.06]">
@@ -306,14 +280,13 @@ function Compare() {
             </thead>
             <tbody>
               {C.compareRows.map((r, ri) => (
-                <motion.tr key={r.label} initial={{ opacity: 0 }} whileInView={{ opacity: 1 }} viewport={{ once: true }} transition={{ delay: ri * 0.05 }} className="border-b border-foreground/[0.05] last:border-0">
+                <motion.tr key={r.label} initial={{ opacity: 0 }} animate={seen ? { opacity: 1 } : { opacity: 0 }} transition={{ delay: ri * 0.05 }} className="border-b border-foreground/[0.05] last:border-0">
                   <td className="p-4">
                     <p className="font-medium">{r.label}</p>
-                    {r.note && <p className="text-xs text-muted-foreground">{r.note}</p>}
                   </td>
                   {r.marks.map((m, i) => (
                     <td key={i} className={cn('p-4 text-center', i === 0 && 'bg-brand-1/[0.06]')}>
-                      <motion.div initial={{ scale: 0 }} whileInView={{ scale: 1 }} viewport={{ once: true }} transition={{ delay: 0.1 + ri * 0.05 + i * 0.03, type: 'spring', stiffness: 400, damping: 18 }}>
+                      <motion.div initial={{ scale: 0 }} animate={seen ? { scale: 1 } : { scale: 0 }} transition={{ delay: 0.1 + ri * 0.05 + i * 0.03, type: 'spring', stiffness: 400, damping: 18 }}>
                         <MarkIcon m={m} />
                       </motion.div>
                     </td>
@@ -332,12 +305,12 @@ function Compare() {
 
 function Trust() {
   return (
-    <Section eyebrow="Safety & proof" title="Designed for real money">
+    <Section eyebrow="Peace of mind" title="Only real payments count">
       <Reveal>
         <div className="glass relative grid gap-8 overflow-hidden rounded-3xl p-6 sm:p-8 lg:grid-cols-[1.1fr_1fr]">
           <div className="absolute inset-0 -z-10 bg-gradient-to-br from-brand-1/10 to-brand-2/10" />
           <ul className="grid gap-4">
-            {C.risks.map(([risk, answer]) => (
+            {C.safety.map(([risk, answer]) => (
               <li key={risk} className="flex gap-3">
                 <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-emerald-500/15 text-good ring-1 ring-emerald-500/25"><ShieldCheck className="size-4" /></span>
                 <div><p className="font-semibold">{risk}</p><p className="text-sm text-muted-foreground">{answer}</p></div>
@@ -359,28 +332,6 @@ function Trust() {
   )
 }
 
-function Markets() {
-  return (
-    <Section eyebrow="Who it's for" title="Businesses where every second counts">
-      <div className="grid gap-5 md:grid-cols-3">
-        {C.markets.map((m, i) => (
-          <Reveal key={m.title} delay={i * 0.08}>
-            <motion.div whileHover={{ y: -6 }} className="glass h-full rounded-3xl p-6">
-              <div className="mb-4 flex items-center justify-between">
-                <span className="grid size-12 place-items-center rounded-2xl bg-gradient-to-br from-brand-1 to-brand-2 text-white shadow-lg shadow-brand-1/25"><m.icon className="size-6" /></span>
-                <span className={cn('rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1', m.tag === 'Next' ? 'bg-foreground/5 text-muted-foreground ring-foreground/10' : 'bg-emerald-500/15 text-good ring-emerald-500/30')}>{m.tag}</span>
-              </div>
-              <h3 className="text-lg font-semibold">{m.title}</h3>
-              <p className="mt-2 text-muted-foreground">{m.body}</p>
-              <p className="mt-3 text-sm"><b>Need:</b> <span className="text-muted-foreground">{m.need}</span></p>
-            </motion.div>
-          </Reveal>
-        ))}
-      </div>
-    </Section>
-  )
-}
-
 function FinalCta() {
   const ref = useRef<HTMLDivElement>(null)
   const { scrollYProgress } = useScroll({ target: ref, offset: ['start end', 'end start'] })
@@ -392,10 +343,9 @@ function FinalCta() {
         <motion.div style={{ rotate }} className="pointer-events-none absolute -right-16 -top-16 size-64 rounded-full border-[28px] border-white/10" />
         <motion.div style={{ rotate }} className="pointer-events-none absolute -bottom-20 -left-10 size-72 rounded-full border-[32px] border-white/10" />
         <h2 className="relative text-4xl font-bold tracking-tight sm:text-5xl">Tap. Pay. Done.</h2>
-        <p className="relative mx-auto mt-4 max-w-xl text-lg text-white/85">Fast payments, safer transactions, clearer records, on hardware that costs less than a phone.</p>
+        <p className="relative mx-auto mt-4 max-w-xl text-lg text-white/85">Shorter queues, real payments, clear records.</p>
         <div className="relative mt-8 flex flex-wrap justify-center gap-3">
           <Button className="h-11 bg-white bg-none px-5 text-base text-slate-900 shadow-xl hover:bg-white/90" nativeButton={false} render={<a href="/dashboard" />}><LayoutDashboard /> Open the dashboard</Button>
-          <Button variant="outline" className="h-11 border-white/40 bg-white/10 px-5 text-base text-white hover:bg-white/20 hover:text-white" nativeButton={false} render={<a href={REPO} target="_blank" rel="noreferrer" />}><Code2 /> View the code</Button>
         </div>
       </div>
     </section>
@@ -407,8 +357,7 @@ function Footer() {
     <footer className="border-t border-foreground/[0.06]">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-5 py-8 text-sm text-muted-foreground">
         <Logo />
-        <p>Team HYDRA-PAY · Technical University of Kenya · DTMES 2026</p>
-        <a href={REPO} target="_blank" rel="noreferrer" className="flex items-center gap-1.5 hover:text-foreground"><Code2 className="size-4" /> GitHub</a>
+        <p>Team HYDRA-PAY · Technical University of Kenya</p>
       </div>
     </footer>
   )
@@ -421,14 +370,11 @@ export default function Landing() {
       <NavBar />
       <main className="overflow-x-clip">
         <Hero />
-        <TechStrip />
-        <Problem />
+        <Audience />
         <HowItWorks />
         <Demo />
-        <Features />
         <Compare />
         <Trust />
-        <Markets />
         <FinalCta />
       </main>
       <Footer />

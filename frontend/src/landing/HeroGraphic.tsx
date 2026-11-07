@@ -34,7 +34,7 @@ function Reader({ active }: { active: boolean }) {
           </div>
         </div>
       </div>
-      <p className="mt-3 text-center text-xs text-muted-foreground">ESP32 + RC522 reader</p>
+      <p className="mt-3 text-center text-xs text-muted-foreground">Card reader</p>
     </div>
   )
 }
