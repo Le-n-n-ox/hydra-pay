@@ -28,6 +28,11 @@ export function Cards({ cards, perCard, mode, onAdd, onEdit, onTopup, reload }: 
     if (await post('/api/cards/block', { uid: c.uid, blocked: !c.blocked })) reload()
   }
 
+  const addForCard = async (c: Card) => {
+    // Uses the card's saved M-Pesa number and its configured per-tap amount.
+    if (await post('/api/topup/mpesa', { uid: c.uid, amount: c.price })) reload()
+  }
+
   return (
     <motion.div variants={stagger} initial="hidden" animate="show" className="grid gap-5">
       <motion.div variants={fadeUp} className="flex flex-wrap items-center gap-3">
@@ -71,6 +76,17 @@ export function Cards({ cards, perCard, mode, onAdd, onEdit, onTopup, reload }: 
                       <PersonAvatar name={c.name} className="size-12 text-sm ring-4 ring-background" />
                       <div className="flex items-center gap-1.5">
                         {c.blocked ? <Pill tone="red"><Ban className="size-3" />Blocked</Pill> : c.status === 'IN' ? <Pill tone="green">IN</Pill> : <Pill>OUT</Pill>}
+                        <Button
+                          size="icon-sm"
+                          variant="ghost"
+                          className="text-muted-foreground/70 hover:text-foreground"
+                          aria-label={`Add credit for ${c.name}`}
+                          title={`Add KSh ${c.price}`}
+                          onClick={() => void addForCard(c)}
+                          disabled={!c.phone || c.price <= 0 || !!c.blocked}
+                        >
+                          <Plus />
+                        </Button>
                         <DropdownMenu>
                           <DropdownMenuTrigger render={<Button size="icon-sm" variant="ghost" aria-label={`Actions for ${c.name}`} />}>
                             <MoreHorizontal />

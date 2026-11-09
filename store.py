@@ -221,6 +221,24 @@ def log_swipe(uid, direction, result, amount=0):
         return {"time": t, "uid": uid, "card": get_card(uid), "direction": direction, "result": result}
 
 
+def remove_card(uid):
+    """Mark an in-range card OUT when the reader reports it has been removed.
+
+    This is intentionally not a second tap: it never charges or creates a
+    payment, but keeps the live dashboard's IN/OUT presence state accurate.
+    """
+    with _lock:
+        card = get_card(uid)
+        if not card or card["status"] != "IN":
+            return None
+        t = now()
+        _db.execute("UPDATE cards SET status='OUT' WHERE uid=?", (uid,))
+        _db.execute("INSERT INTO scans (time, uid, direction, result, amount, balance) VALUES (?,?,?,?,?,?)",
+                    (t, uid, "OUT", "tag removed", 0, card["balance"]))
+        _db.commit()
+        return {"time": t, "uid": uid, "card": get_card(uid), "direction": "OUT", "result": "tag removed"}
+
+
 # ---------- money ----------
 
 def add_money(uid, amount, kind, note=""):

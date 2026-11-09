@@ -119,7 +119,7 @@ Then restart and use **Dashboard › SMS & USSD › Send a test SMS**. That page
 
 ### Firmware
 
-The ESP32 runs **MicroPython** with the code in `micropython/` (already uploaded). It prints `READY: RC522 firmware 0x..` when the reader is found and `UID:XX XX XX XX` once per tap.
+The ESP32 runs **MicroPython** with the code in `micropython/` (already uploaded). It prints `READY: RC522 firmware 0x..` when the reader is found, `UID:XX XX XX XX` when a tag is placed, and `REMOVED:XX XX XX XX` after a tag has been removed for half a second. The dashboard changes that card from `IN` to `OUT` on removal without charging it again.
 
 To re-upload it (use your COM port):
 

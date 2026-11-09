@@ -1,5 +1,5 @@
 // ESP32 + RC522 RFID reader
-// Prints "UID:XX XX XX XX" over USB serial each time a card/tag is tapped.
+// Prints "UID:XX XX XX XX" when a tag is placed and "REMOVED:..." when it leaves.
 // The laptop dashboard (dashboard.py) reads these lines.
 
 #include <SPI.h>
@@ -10,14 +10,16 @@
 #define LED_PIN 2   // ESP32 on-board LED (blinks on each scan)
 
 MFRC522 rfid(SS_PIN, RST_PIN);
-String lastUid = "";
-unsigned long lastTime = 0;
+String activeUid = "";
+unsigned long missingSince = 0;
+const unsigned long REMOVE_DEBOUNCE_MS = 500;
 
 void setup() {
   Serial.begin(115200);
   pinMode(LED_PIN, OUTPUT);
   SPI.begin(18, 19, 23, SS_PIN);  // SCK, MISO, MOSI, SS
   rfid.PCD_Init();
+  rfid.PCD_SetAntennaGain(rfid.RxGain_max);  // improves range on common RC522 clone boards
   delay(50);
 
   byte v = rfid.PCD_ReadRegister(MFRC522::VersionReg);
@@ -30,27 +32,39 @@ void setup() {
 }
 
 void loop() {
-  if (!rfid.PICC_IsNewCardPresent() || !rfid.PICC_ReadCardSerial()) return;
+  if (rfid.PICC_IsNewCardPresent() && rfid.PICC_ReadCardSerial()) {
+    String uid = "";
+    for (byte i = 0; i < rfid.uid.size; i++) {
+      if (rfid.uid.uidByte[i] < 0x10) uid += "0";
+      uid += String(rfid.uid.uidByte[i], HEX);
+      if (i < rfid.uid.size - 1) uid += " ";
+    }
+    uid.toUpperCase();
 
-  String uid = "";
-  for (byte i = 0; i < rfid.uid.size; i++) {
-    if (rfid.uid.uidByte[i] < 0x10) uid += "0";
-    uid += String(rfid.uid.uidByte[i], HEX);
-    if (i < rfid.uid.size - 1) uid += " ";
+    // A card held on the reader is one presence, not repeated IN taps.
+    if (uid != activeUid) {
+      Serial.print("UID:");
+      Serial.println(uid);
+      digitalWrite(LED_PIN, HIGH);
+      delay(150);
+      digitalWrite(LED_PIN, LOW);
+    }
+    activeUid = uid;
+    missingSince = 0;
+    rfid.PICC_HaltA();
+    rfid.PCD_StopCrypto1();
+    return;
   }
-  uid.toUpperCase();
 
-  // ignore the same card re-read within 2 seconds
-  if (uid != lastUid || millis() - lastTime > 2000) {
-    Serial.print("UID:");
-    Serial.println(uid);
-    digitalWrite(LED_PIN, HIGH);
-    delay(150);
-    digitalWrite(LED_PIN, LOW);
+  // Brief missed reads are common with RC522 clones; debounce removal so the
+  // dashboard only receives OUT when the tag has really been removed.
+  if (activeUid.length()) {
+    if (!missingSince) missingSince = millis();
+    if (millis() - missingSince >= REMOVE_DEBOUNCE_MS) {
+      Serial.print("REMOVED:");
+      Serial.println(activeUid);
+      activeUid = "";
+      missingSince = 0;
+    }
   }
-  lastUid = uid;
-  lastTime = millis();
-
-  rfid.PICC_HaltA();
-  rfid.PCD_StopCrypto1();
 }

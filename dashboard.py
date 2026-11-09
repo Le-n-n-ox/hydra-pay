@@ -75,6 +75,13 @@ def handle_uid(uid):
         print(f"[TAP] error: {e}")
 
 
+def handle_removal(uid):
+    try:
+        wallet.on_remove(uid)
+    except Exception as e:
+        print(f"[TAG REMOVED] error: {e}")
+
+
 def serial_loop():
     while True:
         port = find_port()
@@ -90,6 +97,8 @@ def serial_loop():
                     line = s.readline().decode(errors="ignore").strip()
                     if line.startswith("UID:"):
                         handle_uid(line[4:].strip().upper())
+                    elif line.startswith("REMOVED:"):
+                        handle_removal(line[8:].strip().upper())
                     elif line:
                         print(f"[ESP32] {line}")
                         if line.startswith(("READY", "ERROR")):

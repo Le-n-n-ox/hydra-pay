@@ -3,6 +3,7 @@ import json
 import threading
 from pathlib import Path
 
+import announcer
 import mpesa
 import sms
 import store
@@ -34,7 +35,7 @@ def update_settings(values):
     """Persist only dashboard-safe settings; provider secrets stay in .env."""
     allowed = {"ussd_code", "ussd_language_default", "ussd_pin_required", "ussd_max_prompts_per_hour",
                "sms_receipts", "sms_when_whatsapp_fails", "sms_low_balance", "sms_admin_alerts", "admin_phone",
-               "admin_daily_summary_time"}
+               "admin_daily_summary_time", "counter_voice_announcements"}
     current = _read(SETTINGS) or _read(DEFAULTS) or {}
     for key, value in values.items():
         if key in allowed:
@@ -52,6 +53,10 @@ def _send_customer(phone, text, sms_text=None, kind="notice", force_sms=False):
     delivered = whatsapp.send_text(phone, text)
     if force_sms or (not delivered and settings().get("sms_when_whatsapp_fails", True)):
         sms.send(phone, sms_text or text, kind=kind)
+
+
+def _brand():
+    return settings().get("business_name", "Hydra Pay")
 
 
 def notify(card, text, sms_text=None, kind="notice", force_sms=False):
@@ -80,6 +85,12 @@ def voice_thanks(card, amount, balance=None):
             f"payments, reply menu here on WhatsApp, or send us a voice note. "
             f"Thank you for paying with {biz}. Have a great day!")
     _async(whatsapp.send_voice, phone, text)
+
+
+def announce_payment_at_counter(card, amount):
+    """Speak on the dashboard computer, not in a visitor's browser."""
+    if settings().get("counter_voice_announcements", True):
+        announcer.speak_payment_received(card["name"], amount)
 
 
 def receipt(card, tx, extra=""):
@@ -193,23 +204,25 @@ def finish_payment(pid, paid, desc, mpesa_receipt="", failed=False):
             store.update_payment(pid, status="PAID")
             print(f"  M-Pesa {card['name']}: PAID KSh {pay['amount']} {mpesa_receipt}")
             notify(card, payment_receipt(card, store.get_payment(pid)),
-                   f"{settings().get('business_name', 'Hydra Pay')}: KSh {pay['amount']} received from {card['name']}. Ref RFP{pay['id']:05d}.",
+                   sms.payment_receipt(card["name"], pay["amount"], f"RFP{pay['id']:05d}", mpesa_receipt, _brand()),
                    "payment", settings().get("sms_receipts", True))
+            announce_payment_at_counter(card, pay["amount"])
             voice_thanks(card, pay["amount"])
         elif paid:
             tx = store.add_money(pay["uid"], pay["amount"], "TOPUP_MPESA", f"M-Pesa from {pay['phone']}")
             store.update_payment(pid, status="PAID", tx_id=tx["id"])
             print(f"  M-Pesa top-up {card['name']}: PAID KSh {pay['amount']}, balance {tx['balance_after']}")
             notify(store.get_card(pay["uid"]), receipt(card, tx),
-                   f"{settings().get('business_name', 'Hydra Pay')}: KSh {pay['amount']} top-up received. Ref {store.receipt_ref(tx['id'])}.",
+                   sms.topup_receipt(card["name"], pay["amount"], tx["balance_after"], store.receipt_ref(tx["id"]), _brand()),
                    "payment", settings().get("sms_receipts", True))
+            announce_payment_at_counter(card, pay["amount"])
             voice_thanks(card, pay["amount"], tx["balance_after"])
         else:
             store.update_payment(pid, status=f"{'FAILED' if failed else 'NOT PAID'}: {desc}")
             print(f"  M-Pesa {card['name']}: {'FAILED' if failed else 'NOT PAID'} ({desc})")
             if not failed:
                 notify(card, f"❌ Payment of KSh {pay['amount']} was not completed ({desc}).",
-                       f"{settings().get('business_name', 'Hydra Pay')}: payment of KSh {pay['amount']} was not completed.",
+                       sms.payment_not_completed(card["name"], pay["amount"], _brand()),
                        "payment", settings().get("sms_receipts", True))
 
 
@@ -231,7 +244,7 @@ def cash_topup(uid, amount):
         return None, err
     tx = store.add_money(uid, amount, "TOPUP_CASH", "Cash at desk")
     print(f"  Cash top-up {card['name']}: KSh {amount}, balance {tx['balance_after']}")
-    notify(card, receipt(card, tx))
+    notify(card, receipt(card, tx), sms.topup_receipt(card["name"], amount, tx["balance_after"], store.receipt_ref(tx["id"]), _brand()), "topup")
     return tx, f"KSh {amount} cash added to {card['name']}"
 
 
@@ -240,7 +253,8 @@ def undo(tx_id):
     if not tx:
         return None, "That top-up can't be undone"
     card = store.get_card(tx["uid"])
-    notify(card, receipt(card, tx, "A top-up was reversed by the admin."))
+    notify(card, receipt(card, tx, "A top-up was reversed by the admin."),
+           sms.topup_receipt(card["name"], abs(tx["amount"]), tx["balance_after"], store.receipt_ref(tx["id"]), _brand(), reversed=True), "topup")
     return tx, f"Reversed. {card['name']} balance is now KSh {tx['balance_after']}"
 
 
@@ -256,7 +270,7 @@ def on_tap(uid):
         return ev
     if ev["result"] == "blocked":
         notify(card, f"{card['name']}: a blocked card was tapped. Contact the desk.",
-               f"{settings().get('business_name', 'Hydra Pay')}: your blocked card was tapped. Contact the desk.",
+               sms.card_blocked(card["name"], _brand()),
                "security", True)
         sms.send_admin(f"Hydra Pay: blocked card {card['name']} was tapped.", "security")
         return ev
@@ -266,7 +280,7 @@ def on_tap(uid):
     if ev["result"] == "low balance":
         msg = (f"⚠️ {card['name']}: not enough balance to tap IN.\n"
                f"Price KSh {ev['price']}, balance KSh {card['balance']}.\nReply *2* to top up with M-Pesa.")
-        notify(card, msg, f"{settings().get('business_name', 'Hydra Pay')}: low balance. Price KSh {ev['price']}, balance KSh {card['balance']}.",
+        notify(card, msg, sms.low_balance(card["name"], card["balance"], ev["price"], _brand()),
                "low_balance", s.get("sms_low_balance", True))
         auto = int(s.get("auto_topup_amount", 0) or 0)
         if auto > 0:
@@ -282,6 +296,14 @@ def on_tap(uid):
     return ev
 
 
+def on_remove(uid):
+    """Handle the ESP32's debounced physical tag-removal event."""
+    ev = store.remove_card(uid)
+    if ev:
+        print(f"{ev['time']}  OUT  {uid}  {ev['card']['name']}  tag removed")
+    return ev
+
+
 def on_tap_prompt(uid):
     """Pay-per-swipe: swipe IN sends one M-Pesa prompt for the card's price, OUT is free."""
     card = store.get_card(uid)
@@ -292,7 +314,7 @@ def on_tap_prompt(uid):
     if card.get("blocked"):
         ev = store.log_swipe(uid, card["status"], "blocked")
         notify(card, f"{card['name']}: a blocked card was tapped. Contact the desk.",
-               f"{settings().get('business_name', 'Hydra Pay')}: your blocked card was tapped. Contact the desk.",
+               sms.card_blocked(card["name"], _brand()),
                "security", True)
         sms.send_admin(f"Hydra Pay: blocked card {card['name']} was tapped.", "security")
         return ev

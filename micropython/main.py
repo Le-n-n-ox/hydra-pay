@@ -1,4 +1,4 @@
-# Runs on the ESP32 at boot. Prints "UID:XX XX XX XX" for each card tap.
+# Runs on the ESP32 at boot. Prints UID and removal events for each card presence.
 # Wiring: SDA->5  SCK->18  MOSI->23  MISO->19  RST->22  3.3V->3V3  GND->GND
 import time
 from machine import Pin, SPI
@@ -19,17 +19,28 @@ while True:
 
 last_uid = None
 last_seen = 0
+missing_since = None
 
 while True:
     uid = rdr.read_uid()
     now = time.ticks_ms()
     if uid:
-        # holding a card on the reader counts as one tap
-        if uid != last_uid or time.ticks_diff(now, last_seen) > 1500:
+        # A held card is one presence, not repeated taps.
+        if uid != last_uid:
             print("UID:" + uid)
             led.value(1)
             time.sleep_ms(150)
             led.value(0)
         last_uid = uid
         last_seen = time.ticks_ms()
+        missing_since = None
+    elif last_uid:
+        # A few missed RC522 polls are normal; only report a real removal after
+        # half a second of absence, so an IN/OUT state cannot flicker.
+        if missing_since is None:
+            missing_since = now
+        elif time.ticks_diff(now, missing_since) >= 500:
+            print("REMOVED:" + last_uid)
+            last_uid = None
+            missing_since = None
     time.sleep_ms(50)

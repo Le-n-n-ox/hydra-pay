@@ -2,6 +2,7 @@
 import re
 import threading
 import time
+import unicodedata
 
 import store
 import telco
@@ -11,12 +12,69 @@ GSM = set("@£$¥èéùìòÇ\nØø\rÅåΔ_ΦΓΛΩΠΨΣΘΞ !\"#¤%&'()*+,-./
           "ABCDEFGHIJKLMNOPQRSTUVWXYZÄÖÑÜ§abcdefghijklmnopqrstuvwxyzäöñüà")
 
 
+# Customer SMS templates intentionally use only this GSM-7-safe ASCII subset.
+# It avoids broken Unicode characters and the extra cost of Unicode SMS messages.
+GSM = set("\n\r" + "".join(chr(i) for i in range(32, 127)))
+
+
 def plain(text, limit=160):
     """One affordable GSM-7 SMS segment; remove markup, emoji and non-GSM text."""
     text = re.sub(r"[*_]", "", str(text or ""))
+    text = unicodedata.normalize("NFKD", text).encode("ascii", "ignore").decode("ascii")
     text = "".join(c for c in text if c in GSM)
     text = re.sub(r"\s+", " ", text).strip()
     return text[:limit]
+
+
+def _name(name):
+    """Keep a personal greeting without allowing a long name to consume the SMS."""
+    return plain(name or "Customer", 28) or "Customer"
+
+
+def _amount(value):
+    try:
+        return f"{int(round(float(value))):,}"
+    except (TypeError, ValueError):
+        return "0"
+
+
+def payment_receipt(name, amount, reference, mpesa_code="", brand="Hydra Pay"):
+    """Short, complete receipt for an M-Pesa payment (always one SMS segment)."""
+    receipt = f" Ref {plain(reference, 16)}."
+    code = f" M-Pesa {plain(mpesa_code, 20)}." if mpesa_code else ""
+    return plain(f"{plain(brand, 24)}: Payment received. {_name(name)} paid KSh {_amount(amount)}.{receipt}{code} Thank you.")
+
+
+def topup_receipt(name, amount, balance, reference, brand="Hydra Pay", reversed=False):
+    action = "Top-up reversed" if reversed else "Top-up received"
+    return plain(
+        f"{plain(brand, 24)}: {action}. {_name(name)}: KSh {_amount(amount)}. "
+        f"Balance KSh {_amount(balance)}. Ref {plain(reference, 16)}."
+    )
+
+
+def payment_not_completed(name, amount, brand="Hydra Pay"):
+    return plain(
+        f"{plain(brand, 24)}: {_name(name)}, your KSh {_amount(amount)} payment was not completed. "
+        "Try again. If you were charged, visit the desk with your M-Pesa message."
+    )
+
+
+def low_balance(name, balance, price, brand="Hydra Pay"):
+    return plain(
+        f"{plain(brand, 24)}: {_name(name)}, balance KSh {_amount(balance)}. "
+        f"KSh {_amount(price)} is needed to tap in. Top up on WhatsApp or at the desk."
+    )
+
+
+def card_blocked(name, brand="Hydra Pay"):
+    return plain(f"{plain(brand, 24)} security: {_name(name)}, your card is blocked. Contact the desk for help.")
+
+
+def tap_update(name, direction, balance, amount=None, time_text="", brand="Hydra Pay"):
+    detail = f" KSh {_amount(amount)} used." if amount is not None else ""
+    when = f" at {plain(time_text, 5)}" if time_text else ""
+    return plain(f"{plain(brand, 24)}: {_name(name)} tapped {plain(direction, 5)}{when}.{detail} Balance KSh {_amount(balance)}.")
 
 
 def enabled():

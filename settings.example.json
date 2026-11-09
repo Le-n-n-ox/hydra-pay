@@ -9,6 +9,7 @@
   "notify_taps": true,
   "voice_replies": true,
   "voice_receipts": true,
+  "counter_voice_announcements": true,
   "ussd_code": "",
   "ussd_language_default": "en",
   "ussd_pin_required": true,
